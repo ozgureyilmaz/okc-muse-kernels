@@ -1,0 +1,34 @@
+{
+  "problem": "muse_bf16_proj",
+  "generated_at": "2026-10-23T17:49:18.591700+00:00",
+  "stage": "awaiting_login",
+  "next_action": "Wait for a yes, then okc login. After that, okc init muse_bf16_proj only and diff the tree against notes/muse_bf16_proj.md. No okc check and no okc submit until a separate OK.",
+  "window": "open until 2026-11-04T21:00:00-08:00",
+  "assignments": [
+    {
+      "title": "H1 triton-splitk-small-m",
+      "generator": "triton",
+      "expected_gain": "the decode loads, if cuBLAS misses bandwidth at m=1..32. Pooler and qkv_gate are the bytes that matter.",
+      "risk": "medium",
+      "file": null
+    },
+    {
+      "title": "H2 cute-wgmma-verify32",
+      "generator": "cutlass_flashinfer",
+      "expected_gain": "verify-32 pooler, unpooler, and qkv_gate, which are at the 989 TFLOP/s roof. Bandwidth-only tuning cannot reach those floors.",
+      "risk": "high",
+      "file": null
+    },
+    {
+      "title": "H3 prepare-repack",
+      "generator": "triton",
+      "expected_gain": "none by itself. It is the layout H1 and H2 need.",
+      "risk": "low",
+      "file": null
+    }
+  ],
+  "lint": [],
+  "consecutive_misses": 0,
+  "best_speedup": null,
+  "phase2_enabled": false
+}

@@ -1,0 +1,34 @@
+# okc auth, tokens, device codes. Never commit these.
+.okc/
+**/.okc/
+.env
+.env.*
+*.token
+*credentials*
+auth.json
+device-code*
+OKC_TOKEN
+
+# Logs, profiles, and local caches.
+*.log
+profiles/
+.cache/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Raw CLI transcripts (results.jsonl keeps the structured record).
+state/raw/*
+!state/raw/.gitkeep
+
+# Problem trees from `okc init`. Our kernels live in variants/, notes in
+# notes/, counters in state/, and the loop in tools/.
+/muse_bf16_proj/
+/muse_attention_decode/
+/muse_moe_w4a16/
+/muse_decode_layer/
+/muse_prefill_layer/

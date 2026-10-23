@@ -1,0 +1,82 @@
+{
+  "source": "okc problems --json",
+  "resets": "00:00 UTC",
+  "problems": {
+    "muse_bf16_proj": {
+      "status": "active",
+      "scored": {
+        "per_day": 10,
+        "used_local": 0,
+        "remaining_server": null,
+        "history": []
+      },
+      "checks": {
+        "per_day": 20,
+        "used_local": 0,
+        "remaining_server": null,
+        "history": []
+      }
+    },
+    "muse_attention_decode": {
+      "status": "not_started",
+      "scored": {
+        "per_day": 10,
+        "used_local": 0,
+        "remaining_server": null,
+        "history": []
+      },
+      "checks": {
+        "per_day": 20,
+        "used_local": 0,
+        "remaining_server": null,
+        "history": []
+      }
+    },
+    "muse_moe_w4a16": {
+      "status": "not_started",
+      "scored": {
+        "per_day": 10,
+        "used_local": 0,
+        "remaining_server": null,
+        "history": []
+      },
+      "checks": {
+        "per_day": 20,
+        "used_local": 0,
+        "remaining_server": null,
+        "history": []
+      }
+    },
+    "muse_decode_layer": {
+      "status": "not_started",
+      "scored": {
+        "per_day": 10,
+        "used_local": 0,
+        "remaining_server": null,
+        "history": []
+      },
+      "checks": {
+        "per_day": 20,
+        "used_local": 0,
+        "remaining_server": null,
+        "history": []
+      }
+    },
+    "muse_prefill_layer": {
+      "status": "not_started",
+      "scored": {
+        "per_day": 10,
+        "used_local": 0,
+        "remaining_server": null,
+        "history": []
+      },
+      "checks": {
+        "per_day": 20,
+        "used_local": 0,
+        "remaining_server": null,
+        "history": []
+      }
+    }
+  },
+  "limits_fetched_at": "2026-10-23T17:49:18.553390+00:00"
+}

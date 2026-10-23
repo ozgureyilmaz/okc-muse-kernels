@@ -1,0 +1,17 @@
+{
+  "deadline": "2026-11-05T00:00:00-08:00",
+  "stop_hours_before_deadline": 3,
+  "milestone_pt": "2026-11-01T23:59:00-08:00",
+  "reserve_fraction": 0.2,
+  "submit_enabled": false,
+  "check_enabled": false,
+  "phase2_enabled": false,
+  "active_problem": "muse_bf16_proj",
+  "min_improvement_to_continue": 0.02,
+  "stop_after_consecutive_misses": 3,
+  "max_parallel_generators": 3,
+  "parser_locked": false,
+  "limits_reset": "00:00 UTC",
+  "okc_version_seen": "0.7.1",
+  "noise_band": 0.015
+}
