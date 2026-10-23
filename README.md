@@ -13,7 +13,7 @@ git clone https://github.com/ozgureyilmaz/okc-muse-kernels
 cd okc-muse-kernels
 export PATH="$HOME/.okc/bin:$PATH"
 okc --version          # 0.7.1 when this tree was written
-okc whoami             # "not signed in" until login is approved
+okc whoami             # verify the signed-in account
 python tools/run_loop.py status
 ```
 
@@ -25,15 +25,12 @@ curl -fsSL https://openkernelchallenge.dev/install.sh | sh
 
 Then read `notes/muse_bf16_proj.md` and `state/loop.json`.
 
-Current stage: **waiting for login.** `okc init` has not been run. No variant exists. No check and no submit has been sent. `submit_enabled` and `check_enabled` in `state/config.json` are false, so `python tools/submit.py ...` prints the command and does not run it.
+Current stage (2026-10-23): login and init are complete. The untouched starter passed all nine correctness cases, but its off-board check measured 0.9104× (5306.0 µs vs. SGLang's 4830.8 µs). Candidate `v002_triton_splitk_small_m.py` is written and statically linted. Its approved off-board check is running; the result is not recorded yet. No scored submit has been sent. The committed `state/config.json` keeps both switches false.
 
 Next, in order:
 
-1. Ask "Ready for okc login?" and wait for a yes. Then `okc login`, post the device code and https://github.com/login/device, and wait. Do not automate login and do not read `~/.okc`.
-2. `okc problems --json`, then `okc init muse_bf16_proj` only.
-3. Re-read every file init wrote. If it disagrees with `notes/muse_bf16_proj.md`, the files win. Update the note.
-4. Copy the untouched starter to `variants/muse_bf16_proj/v001_baseline_copy.py` and lint it.
-5. Stop again. The first GPU run is `okc check` of that starter, and only after a separate OK. The first `okc submit` is another OK, after a check passes.
+1. Wait for the single v002 check already in progress. Do not retry it while its outcome is ambiguous.
+2. Review its correctness and per-shape timings. Ask for separate approval before any scored submit, and use `python tools/submit.py` so the run is logged.
 
 Do not start the other four problems. Do not start Phase 2. Do not claim a speedup that is not in `state/results.jsonl`.
 

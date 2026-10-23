@@ -1,8 +1,8 @@
 # muse_bf16_proj
 
-Dense projections for Muse Spark Open, one H200, timed against SGLang. No measured speedup yet. Nothing has been submitted.
+Dense projections for Muse Spark Open, one H200, timed against SGLang. The unchanged starter passed its first off-board check (9/9 correctness cases), but its recorded check ratio is 0.9104× (5306.0 µs vs. SGLang's 4830.8 µs). Candidate `v002_triton_splitk_small_m.py` is written and linted; its separately approved off-board check is running, with no result recorded yet. No scored submit has been sent.
 
-Read from `okc show muse_bf16_proj --json` on 23 Oct 2026 with okc 0.7.1, while logged out. `okc init` has not been run. After login, init this problem only and re-read the local `TASK.md`, `AGENTS.md`, `baseline.py`, `reference.py`, `checks.py`, and `submission.py`. If they differ from this note, the files win.
+The initial problem details below came from `okc show muse_bf16_proj --json` on 23 Oct 2026 with okc 0.7.1, while logged out. On 2026-10-23, after the user completed login, `okc problems --json` succeeded and `okc init muse_bf16_proj` ran. All six generated files (`TASK.md`, `AGENTS.md`, `baseline.py`, `reference.py`, `checks.py`, and `submission.py`) were read. They are authoritative if they differ from this note. The starter remains untouched; `variants/muse_bf16_proj/v001_baseline_copy.py` is an exact copy and passed lint, with a warning that PyTorch is not installed locally. Its first check passed as job `0879b1ef893c49d6`; the raw result and parsed summary are in `state/raw/check-964eed6cfef2.log` and `state/results.jsonl`.
 
 Challenge: https://openkernelchallenge.dev/problems/muse_bf16_proj
 Rules: https://openkernelchallenge.dev/rules
@@ -83,7 +83,7 @@ The judge subtracts about 4 µs of CUDA-graph replay overhead from both sides, t
 
 ## Attempt limits
 
-From `okc problems --json` and the rules page, per problem, reset 00:00 UTC. The rules say the caps can change with load. Logged-out JSON did not include how many are left today. Refresh after login.
+From `okc problems --json` and the rules page, per problem, reset 00:00 UTC. The rules say the caps can change with load. The last confirmed refresh, after the baseline check on 2026-10-23, showed 0/10 submits and 1/20 checks used. The v002 check is now in flight, so refresh the counters after it reconciles. Keep the 20% reserve (at most 16 checks and 8 submits per day).
 
 | kind | per day | 20% reserve | may spend |
 | --- | --- | --- | --- |
@@ -100,6 +100,7 @@ No contest-long cap showed up, only the daily cap. A run has 10 minutes includin
 - Do not cache anything derived from `data`.
 - BF16 weights stay BF16, or smaller only if lossless. Activations stay BF16.
 - The image is `lmsysorg/sglang:dev-muse-spark-open`. Triton, CUTLASS, CuTe, FlashInfer, DeepGEMM, and TileLang are available. Nothing else installs. No network on the judge.
+- `TASK.md` adds a pre-run guard: submissions must not patch timing, read harness frames or harness I/O/secrets, edit loaded modules, import the reference, start processes, or use the network.
 - Submissions are Apache-2.0.
 
 ## Hypotheses
@@ -111,8 +112,8 @@ Ranked. None of these have been written or measured. Implement only after the st
 - expected_gain: the decode loads, if cuBLAS misses bandwidth at m=1..32. Pooler and qkv_gate are the bytes that matter.
 - risk: medium
 - cost: high
-- status: open
-- note: One persistent split-K kernel, FP32 accumulate, one BF16 store. Compile time matters because the run budget is 10 minutes.
+- status: check-running
+- note: `variants/muse_bf16_proj/v002_triton_splitk_small_m.py` splits K for non-router m<=32, writes FP32 partials, then reduces and stores BF16 in a second kernel. This differs from the initial one-launch idea; launch and scratch overhead are the primary risks. Its authorized off-board check is running. Router and m>32 use the starter path.
 
 ### H2 cute-wgmma-verify32
 - generator: cutlass_flashinfer
@@ -182,11 +183,11 @@ Ranked. None of these have been written or measured. Implement only after the st
 
 ## What happens next
 
-1. The user says yes, then `okc login`. Post the device code and https://github.com/login/device and wait.
-2. `okc problems --json`, then `okc init muse_bf16_proj` only. Diff against this note.
-3. Copy the untouched starter to `variants/muse_bf16_proj/v001_baseline_copy.py`. Lint it. Do not edit `baseline.py`, `reference.py`, or `checks.py`.
-4. Stop and ask before the first `okc check`. A check is off the board and is the right pipeline test. The first `okc submit` is a separate OK, and only after a check passes.
-5. Log through `tools/submit.py`. No speedup is real until that log says so.
+1. Login, `okc problems --json`, `okc init muse_bf16_proj`, baseline copy, lint, and the first check are complete. The check passed all nine correctness cases.
+2. The off-board check recorded 0.9104× (5306.0 µs against SGLang's 4830.8 µs); this is slower than SGLang and is not a scored submission.
+3. Candidate `v002_triton_splitk_small_m.py` passes static lint; local Torch/Triton are unavailable, so it has not been compiled or correctness-tested. The reviewer found no definite issue and flagged two-launch/scratch overhead as a performance risk.
+4. One separately approved off-board check of v002 is in progress through `python3 tools/submit.py muse_bf16_proj variants/muse_bf16_proj/v002_triton_splitk_small_m.py --kind check --approved`. It should run all nine correctness cases before timing the 30 scored shapes; it spends one check, remains off the leaderboard, and does not authorize a scored submit.
+5. Wait for its result, then review correctness and per-shape timings before any scored submit. Ask for separate approval and use `tools/submit.py` for a scored run. Do not submit the unchanged slower starter.
 
 ## Loopholes that will not be used
 

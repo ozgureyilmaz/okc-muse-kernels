@@ -1,8 +1,8 @@
 {
-  "stage": "awaiting_login",
+  "stage": "check_running",
   "active_problem": "muse_bf16_proj",
   "last_cycle_at": "2026-10-23T17:49:18.592369+00:00",
   "okc_version": "0.7.1",
-  "login": "not signed in (okc whoami on 2026-10-23)",
-  "next_action": "Wait for a yes, then okc login. After that, okc init muse_bf16_proj only and diff the tree against notes/muse_bf16_proj.md. No okc check and no okc submit until a separate OK."
+  "login": "signed in (okc problems --json succeeded on 2026-10-23)",
+  "next_action": "One approved off-board check for v002_triton_splitk_small_m.py is in flight. Wait for its result; do not retry while ambiguous. Review correctness and per-shape timings before any scored submit, which requires separate approval."
 }
