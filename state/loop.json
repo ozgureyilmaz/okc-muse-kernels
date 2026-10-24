@@ -1,8 +1,8 @@
 {
-  "stage": "check_running",
+  "stage": "candidate_checked_no_gain",
   "active_problem": "muse_bf16_proj",
   "last_cycle_at": "2026-10-23T17:49:18.592369+00:00",
   "okc_version": "0.7.1",
   "login": "signed in (okc problems --json succeeded on 2026-10-23)",
-  "next_action": "One approved off-board check for v002_triton_splitk_small_m.py is in flight. Wait for its result; do not retry while ambiguous. Review correctness and per-shape timings before any scored submit, which requires separate approval."
+  "next_action": "v002 passed correctness but recorded 0.8145x (5931.3 us vs SGLang 4830.8 us). Do not submit it. Review per-shape records and prepare another candidate; ask separately before any further check or scored submit."
 }

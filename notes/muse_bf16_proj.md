@@ -1,8 +1,8 @@
 # muse_bf16_proj
 
-Dense projections for Muse Spark Open, one H200, timed against SGLang. The unchanged starter passed its first off-board check (9/9 correctness cases), but its recorded check ratio is 0.9104× (5306.0 µs vs. SGLang's 4830.8 µs). Candidate `v002_triton_splitk_small_m.py` is written and linted; its separately approved off-board check is running, with no result recorded yet. No scored submit has been sent.
+Dense projections for Muse Spark Open, one H200, timed against SGLang. The unchanged starter passed its first off-board check (9/9 correctness cases), with a recorded ratio of 0.9104×. Candidate `v002_triton_splitk_small_m.py` passed all nine correctness cases, but its off-board ratio was 0.8145× (5931.3 µs vs. SGLang's 4830.8 µs; 95% interval 0.8022–0.8267). It is slower and has not been submitted for a score.
 
-The initial problem details below came from `okc show muse_bf16_proj --json` on 23 Oct 2026 with okc 0.7.1, while logged out. On 2026-10-23, after the user completed login, `okc problems --json` succeeded and `okc init muse_bf16_proj` ran. All six generated files (`TASK.md`, `AGENTS.md`, `baseline.py`, `reference.py`, `checks.py`, and `submission.py`) were read. They are authoritative if they differ from this note. The starter remains untouched; `variants/muse_bf16_proj/v001_baseline_copy.py` is an exact copy and passed lint, with a warning that PyTorch is not installed locally. Its first check passed as job `0879b1ef893c49d6`; the raw result and parsed summary are in `state/raw/check-964eed6cfef2.log` and `state/results.jsonl`.
+The initial problem details below came from `okc show muse_bf16_proj --json` on 23 Oct 2026 with okc 0.7.1, while logged out. On 2026-10-23, after the user completed login, `okc problems --json` succeeded and `okc init muse_bf16_proj` ran. All six generated files (`TASK.md`, `AGENTS.md`, `baseline.py`, `reference.py`, `checks.py`, and `submission.py`) were read. They are authoritative if they differ from this note. The starter remains untouched; `variants/muse_bf16_proj/v001_baseline_copy.py` is an exact copy and passed lint. Its first check passed as job `0879b1ef893c49d6`; v002's check passed as job `52ed320192494632`. Raw evaluator records remain local under ignored `state/raw/`; aggregate rows are in `state/results.jsonl` and per-shape v002 timings are in this note.
 
 Challenge: https://openkernelchallenge.dev/problems/muse_bf16_proj
 Rules: https://openkernelchallenge.dev/rules
@@ -83,7 +83,7 @@ The judge subtracts about 4 µs of CUDA-graph replay overhead from both sides, t
 
 ## Attempt limits
 
-From `okc problems --json` and the rules page, per problem, reset 00:00 UTC. The rules say the caps can change with load. The last confirmed refresh, after the baseline check on 2026-10-23, showed 0/10 submits and 1/20 checks used. The v002 check is now in flight, so refresh the counters after it reconciles. Keep the 20% reserve (at most 16 checks and 8 submits per day).
+From `okc problems --json` and the rules page, per problem, reset 00:00 UTC. The rules say the caps can change with load. Refreshed after v002's check on 2026-10-23: `muse_bf16_proj` used 0/10 submits and 2/20 checks, with 18 checks remaining. Keep the 20% reserve (at most 16 checks and 8 submits per day).
 
 | kind | per day | 20% reserve | may spend |
 | --- | --- | --- | --- |
@@ -105,15 +105,52 @@ No contest-long cap showed up, only the daily cap. A run has 10 minutes includin
 
 ## Hypotheses
 
-Ranked. None of these have been written or measured. Implement only after the starter has been checked.
+Ranked. H1 has a first implementation and check result; other hypotheses remain unimplemented.
 
 ### H1 triton-splitk-small-m
 - generator: triton
 - expected_gain: the decode loads, if cuBLAS misses bandwidth at m=1..32. Pooler and qkv_gate are the bytes that matter.
 - risk: medium
 - cost: high
-- status: check-running
-- note: `variants/muse_bf16_proj/v002_triton_splitk_small_m.py` splits K for non-router m<=32, writes FP32 partials, then reduces and stores BF16 in a second kernel. This differs from the initial one-launch idea; launch and scratch overhead are the primary risks. Its authorized off-board check is running. Router and m>32 use the starter path.
+- status: checked-no-gain
+- note: `variants/muse_bf16_proj/v002_triton_splitk_small_m.py` splits K for non-router m<=32, writes FP32 partials, then reduces and stores BF16 in a second kernel. All nine correctness cases passed, but the aggregate off-board ratio was 0.8145×. The implementation adds a second launch and FP32 scratch; this run does not isolate their individual cost. Router and m>32 use the starter path. Do not submit this candidate for a score.
+
+## v002 per-shape check (off-board)
+
+Job `52ed320192494632` passed all nine correctness cases. The table records OKC's paired adjusted medians in microseconds. Ratio is SGLang time divided by v002 time; values below 1 mean v002 was slower. The aggregate ratio was 0.8145× (95% interval 0.8022–0.8267). The raw log is local and ignored by Git; this table preserves its per-shape measurements. Router and m>32 use the starter path, so their rows do not exercise the new split-K kernels.
+
+| Load | m | Layer | SGLang µs | v002 µs | Ratio |
+| --- | ---: | --- | ---: | ---: | ---: |
+| decode 1 | 1 | qkv_gate | 14.416 | 18.355 | 0.7854 |
+| decode 1 | 1 | o | 6.448 | 7.938 | 0.8123 |
+| decode 1 | 1 | pooler | 21.440 | 22.169 | 0.9671 |
+| decode 1 | 1 | unpooler | 7.264 | 9.155 | 0.7935 |
+| decode 1 | 1 | router | 10.432 | 10.231 | 1.0196 |
+| decode 16 | 16 | qkv_gate | 13.904 | 18.075 | 0.7692 |
+| decode 16 | 16 | o | 7.024 | 8.845 | 0.7941 |
+| decode 16 | 16 | pooler | 21.456 | 22.642 | 0.9476 |
+| decode 16 | 16 | unpooler | 18.640 | 21.115 | 0.8828 |
+| decode 16 | 16 | router | 14.960 | 26.481 | 0.5649 |
+| decode 32 | 32 | qkv_gate | 14.528 | 20.195 | 0.7194 |
+| decode 32 | 32 | o | 7.072 | 11.385 | 0.6212 |
+| decode 32 | 32 | pooler | 21.584 | 28.665 | 0.7530 |
+| decode 32 | 32 | unpooler | 18.704 | 29.852 | 0.6265 |
+| decode 32 | 32 | router | 15.392 | 20.012 | 0.7691 |
+| verify 1 | 8 | qkv_gate | 14.384 | 18.497 | 0.7776 |
+| verify 1 | 8 | o | 6.944 | 8.949 | 0.7759 |
+| verify 1 | 8 | pooler | 21.088 | 22.610 | 0.9327 |
+| verify 1 | 8 | unpooler | 6.976 | 9.071 | 0.7690 |
+| verify 1 | 8 | router | 26.464 | 26.752 | 0.9892 |
+| verify 16 | 128 | qkv_gate | 17.248 | 17.442 | 0.9889 |
+| verify 16 | 128 | o | 7.488 | 7.528 | 0.9947 |
+| verify 16 | 128 | pooler | 25.696 | 25.836 | 0.9946 |
+| verify 16 | 128 | unpooler | 19.776 | 19.639 | 1.0070 |
+| verify 16 | 128 | router | 16.224 | 28.766 | 0.5640 |
+| verify 32 | 256 | qkv_gate | 19.808 | 19.830 | 0.9989 |
+| verify 32 | 256 | o | 9.472 | 9.607 | 0.9860 |
+| verify 32 | 256 | pooler | 30.768 | 30.704 | 1.0021 |
+| verify 32 | 256 | unpooler | 24.336 | 24.322 | 1.0006 |
+| verify 32 | 256 | router | 17.488 | 45.909 | 0.3809 |
 
 ### H2 cute-wgmma-verify32
 - generator: cutlass_flashinfer
@@ -185,9 +222,9 @@ Ranked. None of these have been written or measured. Implement only after the st
 
 1. Login, `okc problems --json`, `okc init muse_bf16_proj`, baseline copy, lint, and the first check are complete. The check passed all nine correctness cases.
 2. The off-board check recorded 0.9104× (5306.0 µs against SGLang's 4830.8 µs); this is slower than SGLang and is not a scored submission.
-3. Candidate `v002_triton_splitk_small_m.py` passes static lint; local Torch/Triton are unavailable, so it has not been compiled or correctness-tested. The reviewer found no definite issue and flagged two-launch/scratch overhead as a performance risk.
-4. One separately approved off-board check of v002 is in progress through `python3 tools/submit.py muse_bf16_proj variants/muse_bf16_proj/v002_triton_splitk_small_m.py --kind check --approved`. It should run all nine correctness cases before timing the 30 scored shapes; it spends one check, remains off the leaderboard, and does not authorize a scored submit.
-5. Wait for its result, then review correctness and per-shape timings before any scored submit. Ask for separate approval and use `tools/submit.py` for a scored run. Do not submit the unchanged slower starter.
+3. Candidate `v002_triton_splitk_small_m.py` passed all nine correctness cases, but scored-shape timing was worse overall (0.8145×). It is not a scored result and must not be submitted.
+4. The per-shape timings for job `52ed320192494632` are in the table above; aggregate check rows are in `state/results.jsonl`. The raw OKC log remains local under ignored `state/raw/`. Two of 20 checks are used; no scored attempts are used.
+5. Any further GPU check requires separate approval. Ask separately before any scored submit; do not submit v002 or the unchanged starter.
 
 ## Loopholes that will not be used
 

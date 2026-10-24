@@ -1,87 +1,100 @@
 # okc-muse-kernels
 
-Autonomous kernel loop for the [Muse Spark Open Kernel Challenge](https://openkernelchallenge.dev/). Evaluation is `okc submit` on the organizers' H200. This machine is not a source of speedups.
+This repository tracks kernel experiments for the [Muse Spark Open Kernel Challenge](https://openkernelchallenge.dev/). The organizers run checks and submissions on an H200. This workspace has no GPU, so local lint is not performance evidence.
 
-The default branch is `master`. There is no `main`.
+## Current project
 
-## Resume
+- Active problem: `muse_bf16_proj` only. The other four problems and Phase 2 are out of scope.
+- Latest candidate: `v002_triton_splitk_small_m.py` passed all 9 correctness cases, but measured **0.8145×** (5,931.3 µs vs. SGLang's 4,830.8 µs; 95% interval 0.8022–0.8267). It is slower; do not submit it for a score. Per-shape timings are in the problem note.
+- No scored submission has been sent. Both `check_enabled` and `submit_enabled` are false in `state/config.json`.
 
-From a clean checkout:
+See [the problem note](notes/muse_bf16_proj.md), [the loop state](state/loop.json), and [the attempt counters](state/attempts.json) for the current plan and run history. Raw OKC logs remain local under the ignored `state/raw/` directory.
+
+## Start or resume
+
+From the repository directory:
 
 ```bash
-git clone https://github.com/ozgureyilmaz/okc-muse-kernels
-cd okc-muse-kernels
 export PATH="$HOME/.okc/bin:$PATH"
-okc --version          # 0.7.1 when this tree was written
-okc whoami             # verify the signed-in account
-python tools/run_loop.py status
+okc --version
+okc whoami
+python3 tools/run_loop.py status
 ```
 
-If `okc` is missing, the only install is:
+If `okc` is not installed, install the official CLI:
 
 ```bash
 curl -fsSL https://openkernelchallenge.dev/install.sh | sh
 ```
 
-Then read `notes/muse_bf16_proj.md` and `state/loop.json`.
+Sign in with `okc login` and complete the device approval yourself. Never expose or copy authentication tokens into this repository; do not run `okc api token` or inspect `~/.okc`.
 
-Current stage (2026-10-23): login and init are complete. The untouched starter passed all nine correctness cases, but its off-board check measured 0.9104× (5306.0 µs vs. SGLang's 4830.8 µs). Candidate `v002_triton_splitk_small_m.py` is written and statically linted. Its approved off-board check is running; the result is not recorded yet. No scored submit has been sent. The committed `state/config.json` keeps both switches false.
+Before changing a kernel, read its `notes/<problem>.md` and the state files above. After `okc init <problem>`, read every generated file. The generated `TASK.md` and `AGENTS.md` take priority when they differ from the note.
 
-Next, in order:
+## Kernel workflow
 
-1. Wait for the single v002 check already in progress. Do not retry it while its outcome is ambiguous.
-2. Review its correctness and per-shape timings. Ask for separate approval before any scored submit, and use `python tools/submit.py` so the run is logged.
+1. Run `okc problems --json` to refresh the current daily limits.
+2. Initialize only the active problem: `okc init muse_bf16_proj`.
+3. Keep the generated starter unchanged. Copy it into a new, never-overwritten file under `variants/muse_bf16_proj/`, then lint that copy:
 
-Do not start the other four problems. Do not start Phase 2. Do not claim a speedup that is not in `state/results.jsonl`.
+   ```bash
+   python3 tools/lint_kernel.py variants/muse_bf16_proj/<variant>.py
+   ```
 
-## Loop
+4. Get explicit approval before an off-board GPU check. A check does not count as a scored submission, but it uses the daily check allowance.
+5. Only after a candidate passes a check, get separate approval before any scored submission. Use `tools/submit.py` for both checks and submissions so every run is logged. The helper requires `--approved` and the matching config switch; it defaults to a dry run.
 
-`python tools/run_loop.py cycle` plans from `notes/` and `state/results.jsonl`, lints variants, and prints:
+Example commands, to use only after approval and after enabling the matching switch in `state/config.json`:
 
-```text
-problem | best speedup | attempts used/limit | last result | next action
+```bash
+python3 tools/submit.py muse_bf16_proj variants/muse_bf16_proj/my_variant.py --kind check --approved
+python3 tools/submit.py muse_bf16_proj variants/muse_bf16_proj/my_variant.py --kind submit --approved
 ```
 
-It does not submit. `tools/submit.py` is the only submit path. It logs one JSON line per run (problem, variant, generator, hash, speedup, time, tests, status). That generator column is the record of which style worked. `python tools/run_loop.py router` prints it.
+Do not edit generated `baseline.py`, `reference.py`, or `checks.py`. The helper copies a variant into the generated `submission.py` only when an approved run starts.
 
-Stages, each resumable from `state/`:
+## Loop commands
 
-| command | what it does |
+Run from the repository root with `python3 tools/run_loop.py <command>`:
+
+| Command | Purpose |
 | --- | --- |
-| `status` | print the table, change nothing |
-| `plan` or `cycle` | rewrite `state/plan.json` from the open hypotheses, lint variants |
-| `refresh-limits` | `okc problems --json` into `state/attempts.json` |
-| `analyze` | append a three-line post-mortem to the problem note |
-| `lint <file>` | static gate, no GPU |
+| `status` | Show each problem's best result, attempt usage, and next action. |
+| `plan` | Build `state/plan.json` from the notes and recorded results; lint variants. |
+| `cycle` | Run the planning step and print the current loop summary. It does not submit. |
+| `refresh-limits` | Fetch `okc problems --json` and update `state/attempts.json`. |
+| `analyze` | Add a short post-mortem to the active problem note. |
+| `router` | Summarize results by generator style. |
 
-Hypotheses live under `## Hypotheses` in the problem note, as `### Hn slug` plus `- generator:`, `- expected_gain:`, `- risk:`, `- cost:`, `- status:`, `- note:`. A variant file starts with `# okc: problem=<name>` and the header keys `variant`, `problem`, `generator`, `idea`, `expected_gain`, `risks`. Files in `variants/` are never overwritten.
+`state/results.jsonl` records each check or submit. Raw OKC logs contain detailed correctness and timing data. Do not claim a speedup unless a result is recorded there.
 
-## Budget
+## Limits and dates
 
-Per problem, from `okc problems` on 23 Oct 2026: 10 scored submits and 20 checks a day, reset 00:00 UTC. The rules page says these can change. Keep 20% unused, so the tools spend at most 8 submits and 16 checks. The kernel track closes 2026-11-05 00:00 America/Los_Angeles (Nov 4, 11:59 pm PT). The loop stops three hours earlier. Target a working `muse_bf16_proj` by Nov 1.
+The CLI reports per-problem daily limits, which reset at 00:00 UTC and may change. Keep 20% unused: at the current documented limits, that means at most 8 scored submissions and 16 checks per day. Refresh the counters before future GPU runs.
 
-`okc check` is a real run kept off the board. It does not spend a scored attempt. It does spend the check cap.
+The kernel track closes at 00:00 on 5 November 2026, America/Los_Angeles. Stop work three hours before closing. The target is a working `muse_bf16_proj` by 1 November.
 
-## Layout
+## Repository map
 
 ```text
-notes/<problem>.md          rules, roofline, hypotheses, dead ends
-state/attempts.json         daily counters
-state/results.jsonl         one line per run, including generator style
-state/best/<problem>/       fastest passing kernel
-state/config.json           switches, all defaulting to off
-variants/<problem>/         every candidate, kept
-tools/                      submit, parse, lint, leaderboard, run_loop
+notes/<problem>.md          problem rules, hypotheses, and findings
+state/attempts.json         daily check and submit counters
+state/results.jsonl         one aggregate record per run
+state/raw/                  local OKC run logs; ignored by Git
+state/best/<problem>/       fastest passing scored kernel
+state/config.json           safety switches and project limits
+variants/<problem>/         versioned candidate kernels
+tools/                      lint, submit, parse, and loop utilities
 ```
 
-`okc init` writes `muse_*/` at the repo root. Those trees are gitignored. Edit only `submission.py` inside them, and only by copying a file from `variants/`.
+`okc init` creates gitignored `muse_*/` directories at the repository root. Keep candidate source in `variants/`; the submit helper copies it into the generated `submission.py` when a run is approved.
 
-## Hard rules
+## Challenge rules
 
-- No benchmark detection, no caching across calls, no hardcoded outputs, no harness or timing tampering, no network on the judge. A loophole gets reported and not used.
-- Correctness before speed. A faster kernel that misses tolerance scores zero.
-- Never print or store `okc` tokens, device codes, or auth files. Never run `okc api token`.
-- If okc says logged out or rate limited, stop.
-- Local CPU checks are syntax, imports, shapes, and dtypes only.
+- Correctness comes before speed. A kernel that misses tolerance scores zero.
+- No benchmark detection, hardcoded outputs, caching across calls, timing or harness tampering, or judge-time network access.
+- Keep activations and weights at their allowed precision. Repack weights losslessly in `prepare`; do not move timed work there.
+- If OKC reports a logged-out or rate-limited state, stop.
+- Submissions must use the Apache-2.0 license.
 
-Kernels we submit are Apache-2.0, which is the challenge rule.
+Read the official [challenge rules](https://openkernelchallenge.dev/rules) and the active problem's `TASK.md` before implementing or submitting a kernel.
