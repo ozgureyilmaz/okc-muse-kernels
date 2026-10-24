@@ -1,6 +1,6 @@
 # muse_bf16_proj
 
-Dense projections for Muse Spark Open, one H200, timed against SGLang. The unchanged starter passed its first off-board check (9/9 correctness cases), with a recorded ratio of 0.9104×. Candidate `v002_triton_splitk_small_m.py` passed all nine correctness cases, but its off-board ratio was 0.8145× (5931.3 µs vs. SGLang's 4830.8 µs; 95% interval 0.8022–0.8267). It is slower and has not been submitted for a score.
+Dense projections for Muse Spark Open, one H200, timed against SGLang. The unchanged starter measured 0.9104×. v006 passed all nine correctness cases and its check measured 1.0225× (95% CI 1.0072–1.0378), meeting the 1.02× gate. Its one scored submission passed and measured 1.0139× (95% CI 0.9987–1.0291). The account appears on the board at rank 736 of 740.
 
 The initial problem details below came from `okc show muse_bf16_proj --json` on 23 Oct 2026 with okc 0.7.1, while logged out. On 2026-10-23, after the user completed login, `okc problems --json` succeeded and `okc init muse_bf16_proj` ran. All six generated files (`TASK.md`, `AGENTS.md`, `baseline.py`, `reference.py`, `checks.py`, and `submission.py`) were read. They are authoritative if they differ from this note. The starter remains untouched; `variants/muse_bf16_proj/v001_baseline_copy.py` is an exact copy and passed lint. Its first check passed as job `0879b1ef893c49d6`; v002's check passed as job `52ed320192494632`. Raw evaluator records remain local under ignored `state/raw/`; aggregate rows are in `state/results.jsonl` and per-shape v002 timings are in this note.
 
@@ -83,7 +83,7 @@ The judge subtracts about 4 µs of CUDA-graph replay overhead from both sides, t
 
 ## Attempt limits
 
-From `okc problems --json` and the rules page, per problem, reset 00:00 UTC. The rules say the caps can change with load. Refreshed after v002's check on 2026-10-23: `muse_bf16_proj` used 0/10 submits and 2/20 checks, with 18 checks remaining. Keep the 20% reserve (at most 16 checks and 8 submits per day).
+Limits are per problem and reset at 00:00 UTC; they can change with load. Refreshed on 2026-10-24 after the scored run: 1/10 scored submissions and 4/20 checks used, with 9 submissions and 16 checks remaining on the server. Preserve the 20% reserve: at most 8 scored submissions and 16 checks per day.
 
 | kind | per day | 20% reserve | may spend |
 | --- | --- | --- | --- |
@@ -92,7 +92,7 @@ From `okc problems --json` and the rules page, per problem, reset 00:00 UTC. The
 
 No contest-long cap showed up, only the daily cap. A run has 10 minutes including compilation. A timeout is charged. The same source returns its earlier result.
 
-`state/config.json` has `submit_enabled` and `check_enabled` set false. `tools/submit.py` stays a dry-run until both the switch and `--approved` are set, and it refuses a hash that was already sent.
+`state/config.json` has `submit_enabled` and `check_enabled` set false. `tools/submit.py` stays a dry-run until the matching switch and `--approved` are set. It blocks duplicate checks and scored submissions; a scored run may promote the exact hash of a passing check only when the correctness, aggregate, and confidence gates pass.
 
 ## Rules that change the kernel
 
@@ -102,18 +102,6 @@ No contest-long cap showed up, only the daily cap. A run has 10 minutes includin
 - The image is `lmsysorg/sglang:dev-muse-spark-open`. Triton, CUTLASS, CuTe, FlashInfer, DeepGEMM, and TileLang are available. Nothing else installs. No network on the judge.
 - `TASK.md` adds a pre-run guard: submissions must not patch timing, read harness frames or harness I/O/secrets, edit loaded modules, import the reference, start processes, or use the network.
 - Submissions are Apache-2.0.
-
-## Hypotheses
-
-Ranked. H1 has a first implementation and check result; other hypotheses remain unimplemented.
-
-### H1 triton-splitk-small-m
-- generator: triton
-- expected_gain: the decode loads, if cuBLAS misses bandwidth at m=1..32. Pooler and qkv_gate are the bytes that matter.
-- risk: medium
-- cost: high
-- status: checked-no-gain
-- note: `variants/muse_bf16_proj/v002_triton_splitk_small_m.py` splits K for non-router m<=32, writes FP32 partials, then reduces and stores BF16 in a second kernel. All nine correctness cases passed, but the aggregate off-board ratio was 0.8145×. The implementation adds a second launch and FP32 scratch; this run does not isolate their individual cost. Router and m>32 use the starter path. Do not submit this candidate for a score.
 
 ## v002 per-shape check (off-board)
 
@@ -151,6 +139,18 @@ Job `52ed320192494632` passed all nine correctness cases. The table records OKC'
 | verify 32 | 256 | pooler | 30.768 | 30.704 | 1.0021 |
 | verify 32 | 256 | unpooler | 24.336 | 24.322 | 1.0006 |
 | verify 32 | 256 | router | 17.488 | 45.909 | 0.3809 |
+
+## Hypotheses
+
+H1 and H9 were checked and rejected on performance. H10 passed its check gate and was submitted once after the exact-hash and limit refresh.
+
+### H1 triton-splitk-small-m
+- generator: triton
+- expected_gain: the decode loads, if cuBLAS misses bandwidth at m=1..32. Pooler and qkv_gate are the bytes that matter.
+- risk: medium
+- cost: high
+- status: checked-no-gain
+- note: `variants/muse_bf16_proj/v002_triton_splitk_small_m.py` splits K for non-router m<=32, writes FP32 partials, then reduces and stores BF16 in a second kernel. All nine correctness cases passed, but the aggregate off-board ratio was 0.8145×. The implementation adds a second launch and FP32 scratch; this run does not isolate their individual cost. Router and m>32 use the starter path. Do not submit this candidate for a score.
 
 ### H2 cute-wgmma-verify32
 - generator: cutlass_flashinfer
@@ -208,6 +208,68 @@ Job `52ed320192494632` passed all nine correctness cases. The table records OKC'
 - status: open
 - note: 128-bit loads and stores, swizzled shared memory. Only after a passing faster kernel exists.
 
+### H9 low-m-gemv-and-router
+- generator: triton
+- expected_gain: improve the bandwidth-bound decode and verify-1 projections; retain SGLang's router precision path.
+- risk: high
+- cost: medium
+- status: checked-no-gain
+- note: v003 used one tiled dot kernel for m<=32 plus the router hi/lo path; v004 used a vector reduction for m<=8 and F.linear otherwise. Both passed the nine correctness cases but had aggregate ratios below 1.0. See the raw logs and result rows; do not submit either candidate.
+
+## New candidate check outcomes
+
+All runs below were logged through `tools/submit.py`. Each check passed all nine correctness cases. v003–v005 missed the 1.02× point gate; v006 met both the point and confidence gates.
+
+| Candidate | Hash | Job | Aggregate | 95% interval | Score time |
+| --- | --- | --- | ---: | --- | ---: |
+| v003 `v003_triton_onepass_hilo.py` | `6053432cc080365b52a9f25853b68be2fb74567fed0f3df30d4a7bec2c729eab` | `7228123952934a9a` | 0.5677× | 0.5592–0.5762 | 8509.1 µs |
+| v004 `v004_bf16_gemv_hilo.py` | `1f656f39743fcacbc01a8082859a323c165c8c6d91c9cff6ddde08b16eae878b` | `3c076f2a83cd4347` | 0.7145× | 0.7037–0.7252 | 6761.4 µs |
+| v005 `v005_hopper_gemv_hilo.py` | `0ea01bcb7dc410ca65fd87644b8cad4c6f7edec820d76ed6ae3e11ad600af68d` | `a981192f76b64e01` | 1.0174× | 1.0021–1.0326 | 4748.3 µs |
+| v006 `v006_hopper_gemv_router_addmm.py` | `6df4c93a5da945667530c39f5439e6332a1d2240fb1d573158a684c6384444b1` | `c5deac6f18bb456e` | 1.0225× | 1.0072–1.0378 | 4724.4 µs |
+
+v006 passed 9/9 correctness cases. It keeps the v005 Hopper GEMV path for eligible m=1 projections and folds the router hi/lo addition into `torch.addmm`. Its scored job `00e22ad9869b4bb7` also passed all correctness cases and measured 1.0139× (95% CI 0.9987–1.0291; score time 4764.5 µs). The scored-run interval includes 1.0, so treat the point improvement as provisional. The exact hash and full 30-shape check medians are below. Raw evaluator records are in ignored `state/raw/`; `state/results.jsonl` contains aggregate rows.
+
+| Load | m | Layer | SGLang µs | v006 µs | Ratio |
+| --- | ---: | --- | ---: | ---: | ---: |
+| decode 1 | 1 | qkv_gate | 14.304 | 13.378 | 1.0692× |
+| decode 1 | 1 | o | 6.752 | 6.036 | 1.1187× |
+| decode 1 | 1 | pooler | 21.504 | 18.889 | 1.1384× |
+| decode 1 | 1 | unpooler | 6.784 | 5.997 | 1.1313× |
+| decode 1 | 1 | router | 10.528 | 10.462 | 1.0063× |
+| decode 16 | 16 | qkv_gate | 14.224 | 13.995 | 1.0163× |
+| decode 16 | 16 | o | 6.960 | 6.602 | 1.0543× |
+| decode 16 | 16 | pooler | 21.776 | 21.512 | 1.0123× |
+| decode 16 | 16 | unpooler | 18.800 | 18.429 | 1.0201× |
+| decode 16 | 16 | router | 14.800 | 14.513 | 1.0198× |
+| decode 32 | 32 | qkv_gate | 14.288 | 14.345 | 0.9960× |
+| decode 32 | 32 | o | 6.944 | 6.897 | 1.0069× |
+| decode 32 | 32 | pooler | 21.920 | 21.857 | 1.0029× |
+| decode 32 | 32 | unpooler | 18.992 | 18.679 | 1.0167× |
+| decode 32 | 32 | router | 15.424 | 15.224 | 1.0132× |
+| verify 1 | 8 | qkv_gate | 14.480 | 14.440 | 1.0028× |
+| verify 1 | 8 | o | 7.008 | 6.927 | 1.0116× |
+| verify 1 | 8 | pooler | 21.536 | 21.379 | 1.0074× |
+| verify 1 | 8 | unpooler | 7.136 | 7.093 | 1.0060× |
+| verify 1 | 8 | router | 26.400 | 26.312 | 1.0033× |
+| verify 16 | 128 | qkv_gate | 17.120 | 16.937 | 1.0108× |
+| verify 16 | 128 | o | 7.568 | 7.663 | 0.9875× |
+| verify 16 | 128 | pooler | 25.104 | 24.793 | 1.0125× |
+| verify 16 | 128 | unpooler | 19.776 | 19.600 | 1.0090× |
+| verify 16 | 128 | router | 16.496 | 16.384 | 1.0068× |
+| verify 32 | 256 | qkv_gate | 19.712 | 19.658 | 1.0028× |
+| verify 32 | 256 | o | 9.376 | 9.296 | 1.0086× |
+| verify 32 | 256 | pooler | 30.800 | 30.658 | 1.0046× |
+| verify 32 | 256 | unpooler | 24.256 | 24.245 | 1.0004× |
+| verify 32 | 256 | router | 17.568 | 17.472 | 1.0055× |
+
+### H10 hopper-gemv-router-addmm
+- generator: sglang_hopper_gemv_torch_addmm
+- expected_gain: preserve the v005 decode-1 projection gains and fold a separate router accumulation into the second matrix operation.
+- risk: medium
+- cost: low
+- status: checked-passing
+- note: v006 passed 9/9 cases; check aggregate 1.0225× (95% CI 1.0072–1.0378), then scored job `00e22ad9869b4bb7` passed at 1.0139× (95% CI 0.9987–1.0291). The account appears at rank 736/740.
+
 ## Dead ends
 
 - Fusing the five layers. Each `kernel_fn` call is one layer.
@@ -220,11 +282,10 @@ Job `52ed320192494632` passed all nine correctness cases. The table records OKC'
 
 ## What happens next
 
-1. Login, `okc problems --json`, `okc init muse_bf16_proj`, baseline copy, lint, and the first check are complete. The check passed all nine correctness cases.
-2. The off-board check recorded 0.9104× (5306.0 µs against SGLang's 4830.8 µs); this is slower than SGLang and is not a scored submission.
-3. Candidate `v002_triton_splitk_small_m.py` passed all nine correctness cases, but scored-shape timing was worse overall (0.8145×). It is not a scored result and must not be submitted.
-4. The per-shape timings for job `52ed320192494632` are in the table above; aggregate check rows are in `state/results.jsonl`. The raw OKC log remains local under ignored `state/raw/`. Two of 20 checks are used; no scored attempts are used.
-5. Any further GPU check requires separate approval. Ask separately before any scored submit; do not submit v002 or the unchanged starter.
+1. v006 passed its 9/9 correctness check at 1.0225× with a 95% CI lower bound above 1.0×; the exact checked hash was `6df4c93a5da945667530c39f5439e6332a1d2240fb1d573158a684c6384444b1`.
+2. One scored submission was sent as job `00e22ad9869b4bb7`; status passed, speedup 1.0139×, and its 95% interval includes 1.0×.
+3. The leaderboard lists `ozgureyilmaz` at rank 736/740.
+4. Both config switches and Phase 2 remain disabled. Do not resend the hash or start another problem.
 
 ## Loopholes that will not be used
 

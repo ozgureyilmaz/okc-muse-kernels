@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import sys
+import json
+import tempfile
 import unittest
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -13,6 +16,7 @@ import common
 import lint_kernel
 import parse_result
 import run_loop
+import submit
 
 SAMPLE = """\
 ✓ submitted muse_moe_w4a16/submission.py to muse_moe_w4a16 job 9c1e04b7a2d35f86
@@ -158,11 +162,52 @@ class NotesAndLintTests(unittest.TestCase):
         self.assertEqual([item["title"].split()[0] for item in found], ["H1", "H2"])
         self.assertEqual(found[1]["status"], "dead")
 
-    def test_real_notes_have_eight_open(self):
+    def test_real_notes_have_seven_open(self):
         text = (common.NOTES / "muse_bf16_proj.md").read_text()
         found = [item for item in common.parse_hypotheses(text) if item.get("status") == "open"]
-        self.assertEqual(len(found), 8)
-        self.assertEqual(found[0]["generator"], "triton")
+        self.assertEqual(len(found), 7)
+        self.assertEqual(found[0]["generator"], "cutlass_flashinfer")
+
+
+class SubmitPromotionTests(unittest.TestCase):
+    def test_exact_hash_promotion_requires_all_check_gates(self):
+        digest = "a" * 64
+        row = {
+            "problem": "muse_bf16_proj",
+            "hash": digest,
+            "kind": "check",
+            "status": "passed",
+            "job": "check-job",
+        }
+        result = {
+            "passed": True,
+            "checks": {"ok": True},
+            "speedup": 1.022,
+            "speedup_ci": [1.005, 1.04],
+            "records": [{"event": "test", "status": "pass"} for _ in range(9)],
+        }
+        payload = {
+            "board": "muse_bf16_proj",
+            "mode": "check",
+            "id": "check-job",
+            "result": result,
+        }
+        with tempfile.TemporaryDirectory() as temp_dir:
+            raw = Path(temp_dir)
+            (raw / f"check-{digest[:12]}.log").write_text(json.dumps(payload))
+            with patch.object(submit.common, "RAW", raw):
+                self.assertTrue(
+                    submit._has_eligible_check(
+                        "muse_bf16_proj", digest, [row], {"min_improvement_to_continue": 0.02}
+                    )
+                )
+                result["speedup_ci"] = [0.99, 1.04]
+                (raw / f"check-{digest[:12]}.log").write_text(json.dumps(payload))
+                self.assertFalse(
+                    submit._has_eligible_check(
+                        "muse_bf16_proj", digest, [row], {"min_improvement_to_continue": 0.02}
+                    )
+                )
 
     def test_lint(self):
         good = lint_kernel.lint_source(GOOD)

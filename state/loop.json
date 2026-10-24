@@ -1,8 +1,8 @@
 {
-  "stage": "candidate_checked_no_gain",
+  "stage": "scored_candidate_visible",
   "active_problem": "muse_bf16_proj",
-  "last_cycle_at": "2026-10-23T17:49:18.592369+00:00",
+  "last_cycle_at": "2026-10-24T15:15:22.365596+00:00",
   "okc_version": "0.7.1",
-  "login": "signed in (okc problems --json succeeded on 2026-10-23)",
-  "next_action": "v002 passed correctness but recorded 0.8145x (5931.3 us vs SGLang 4830.8 us). Do not submit it. Review per-shape records and prepare another candidate; ask separately before any further check or scored submit."
+  "login": "signed in (okc problems --json succeeded on 2026-10-24)",
+  "next_action": "v006 passed its 9/9 check at 1.0225x (95% CI 1.0072-1.0378) and was submitted once as job 00e22ad9869b4bb7. The scored run passed correctness at 1.0139x (95% CI 0.9987-1.0291); leaderboard shows ozgureyilmaz at rank 736/740. One scored submission used; current server limits are 9 submits and 16 checks remaining, with 20% reserve protected. Both challenge switches and Phase 2 remain false. Do not resend the same hash or start another problem."
 }

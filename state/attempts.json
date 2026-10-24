@@ -6,15 +6,24 @@
       "status": "active",
       "scored": {
         "per_day": 10,
-        "used_local": 0,
-        "remaining_server": 10,
-        "history": [],
-        "used_server": 0
+        "used_local": 1,
+        "remaining_server": 9,
+        "history": [
+          {
+            "at": "2026-10-24T15:08:50.632950+00:00",
+            "kind": "scored",
+            "job": "00e22ad9869b4bb7",
+            "variant": "v006_hopper_gemv_router_addmm",
+            "hash": "6df4c93a5da945667530c39f5439e6332a1d2240fb1d573158a684c6384444b1",
+            "status": "passed"
+          }
+        ],
+        "used_server": 1
       },
       "checks": {
         "per_day": 20,
-        "used_local": 2,
-        "remaining_server": 18,
+        "used_local": 4,
+        "remaining_server": 16,
         "history": [
           {
             "at": "2026-10-23T18:14:37.592031+00:00",
@@ -31,9 +40,41 @@
             "variant": "v002_triton_splitk_small_m",
             "hash": "cfa19a70d3ad668d4320102483ac88fbeaef657b32d491204f0c961207d307ec",
             "status": "passed"
+          },
+          {
+            "at": "2026-10-24T13:56:32.751561+00:00",
+            "kind": "checks",
+            "job": "7228123952934a9a",
+            "variant": "v003_triton_onepass_hilo",
+            "hash": "6053432cc080365b52a9f25853b68be2fb74567fed0f3df30d4a7bec2c729eab",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-24T14:06:27.267479+00:00",
+            "kind": "checks",
+            "job": "3c076f2a83cd4347",
+            "variant": "v004_bf16_gemv_hilo",
+            "hash": "1f656f39743fcacbc01a8082859a323c165c8c6d91c9cff6ddde08b16eae878b",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-24T14:44:43.453232+00:00",
+            "kind": "checks",
+            "job": "a981192f76b64e01",
+            "variant": "v005_hopper_gemv_hilo",
+            "hash": "0ea01bcb7dc410ca65fd87644b8cad4c6f7edec820d76ed6ae3e11ad600af68d",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-24T14:56:32.321446+00:00",
+            "kind": "checks",
+            "job": "c5deac6f18bb456e",
+            "variant": "v006_hopper_gemv_router_addmm",
+            "hash": "6df4c93a5da945667530c39f5439e6332a1d2240fb1d573158a684c6384444b1",
+            "status": "passed"
           }
         ],
-        "used_server": 2
+        "used_server": 4
       }
     },
     "muse_attention_decode": {
@@ -46,9 +87,9 @@
         "used_server": 0
       },
       "checks": {
-        "per_day": 20,
+        "per_day": 10,
         "used_local": 0,
-        "remaining_server": 20,
+        "remaining_server": 10,
         "history": [],
         "used_server": 0
       }
@@ -80,9 +121,9 @@
         "used_server": 0
       },
       "checks": {
-        "per_day": 20,
+        "per_day": 10,
         "used_local": 0,
-        "remaining_server": 20,
+        "remaining_server": 10,
         "history": [],
         "used_server": 0
       }
@@ -97,13 +138,13 @@
         "used_server": 0
       },
       "checks": {
-        "per_day": 20,
+        "per_day": 10,
         "used_local": 0,
-        "remaining_server": 20,
+        "remaining_server": 10,
         "history": [],
         "used_server": 0
       }
     }
   },
-  "limits_fetched_at": "2026-10-23T18:50:54.044511+00:00"
+  "limits_fetched_at": "2026-10-24T15:15:22.365596+00:00"
 }
