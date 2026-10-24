@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Resumable planner / gatekeeper / status loop.
 
 Generators are not spawned here. A cycle reads notes and results, assigns up

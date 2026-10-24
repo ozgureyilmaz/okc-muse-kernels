@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Turn an `okc submit` / `okc check` transcript into one result record.
 
 The text patterns follow the sample on https://openkernelchallenge.dev/.

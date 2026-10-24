@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Static checks for a submission variant. Does not import or run the kernel.
 
 The timed path is `kernel_fn` and the functions it calls. `prepare` is untimed

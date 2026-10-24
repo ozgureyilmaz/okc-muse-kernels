@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Local tests for the loop. No okc login and no GPU."""
 
 from __future__ import annotations

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Print `okc leaderboard --json` and keep a redacted copy under state/raw/."""
 
 from __future__ import annotations
