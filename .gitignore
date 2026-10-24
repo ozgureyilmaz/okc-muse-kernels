@@ -32,3 +32,44 @@ state/raw/*
 /muse_moe_w4a16/
 /muse_decode_layer/
 /muse_prefill_layer/
+
+# OS / editors / agents
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.cursor/
+.codex/
+.claude/
+*.swp
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.so
+*.o
+*.cubin
+*.ptx
+.triton/
+# Notebooks
+.ipynb_checkpoints/
+# Profiler traces
+*.nsys-rep
+*.ncu-rep
+*.qdrep
+*.sqlite
+*.prof
+*.trace.json
+# Weights / large data
+*.pt
+*.pth
+*.safetensors
+*.bin
+*.npy
+# Keys
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+# Local loop control
+state/HALT
