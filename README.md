@@ -1,78 +1,41 @@
 # okc-muse-kernels
 
-Kernel experiments for the [Muse Spark Open Kernel Challenge](https://openkernelchallenge.dev/). Official checks run on an H200. This machine has no GPU, so local lint and tests verify code and workflow only; performance claims come from recorded OKC results.
+This repository is my entry for the [Muse Spark Open Kernel Challenge](https://openkernelchallenge.dev/), problem `muse_bf16_proj`: dense BF16/FP32 projections on one H200, timed against SGLang. See the [challenge rules](https://openkernelchallenge.dev/rules).
 
-## Current state
+## Results
 
-- Active problem: `muse_bf16_proj` only. Other problems and Phase 2 are out of scope.
-- Candidate `v006_hopper_gemv_router_addmm.py` passed all nine correctness cases. Its off-board check measured **1.0225×** (95% CI **1.0072–1.0378×**).
-- Scored job `00e22ad9869b4bb7` passed correctness and measured **1.0139×** (95% CI **0.9987–1.0291×**). The account is visible at rank **736/740**.
-- `state/config.json` keeps `check_enabled` and `submit_enabled` false. Do not resend this hash; the recorded result is in `state/results.jsonl`.
+| Variant | Idea | Check speedup |
+| --- | --- | ---: |
+| v001 | Copy of the starter baseline. | 0.9104× |
+| v002 | Split K across Triton CTAs for small batches. | 0.8145× |
+| v003 | One tiled Triton GEMM with the router hi/lo path. | 0.5677× |
+| v004 | Vector-reduce low-token GEMVs; use `F.linear` for larger batches. | 0.7145× |
+| v005 | Use SGLang's Hopper BF16 GEMV for eligible single-token projections. | 1.0174× |
+| v006 | Keep Hopper GEMV and fold the router hi/lo sum into FP32 `addmm`. | 1.0225× check; 1.0139× scored |
 
-See [the problem note](notes/muse_bf16_proj.md) for the specification, candidate history, and per-shape timings. `state/results.jsonl` records aggregate check and submission results. Detailed evaluator logs stay local under the ignored `state/raw/` directory.
+The best approach uses SGLang's Hopper BF16 GEMV for `m=1` and folds the router hi/lo path into an FP32 `addmm`. The scored run is recorded in `state/results.jsonl`.
 
-## Quick start
+## Requirements and local commands
 
-Run from the repository directory:
-
-```bash
-export PATH="$HOME/.okc/bin:$PATH"
-okc --version
-okc whoami
-python3 tools/run_loop.py status
-```
-
-If the CLI reports that you are signed out, stop and complete `okc login` yourself. Do not read or copy authentication tokens into this repository.
-
-## Kernel workflow
-
-1. Read the active problem's `TASK.md` and `AGENTS.md`, its note under `notes/`, and the state files before editing.
-2. Refresh daily limits with `python3 tools/run_loop.py refresh-limits`. Preserve the 20% reserve and stop if OKC reports a login or rate-limit problem.
-3. Keep generated starter, reference, and checks files unchanged. Copy the starter to a new file under `variants/<problem>/`, then lint it:
-
-   ```bash
-   python3 tools/lint_kernel.py variants/<problem>/<candidate>.py
-   ```
-
-4. Run an off-board check only with explicit authorization. Use `tools/submit.py` so the exact source hash and job are logged:
-
-   ```bash
-   python3 tools/submit.py <problem> variants/<problem>/<candidate>.py --kind check --approved
-   ```
-
-5. Submit a score only after the exact checked hash passes correctness and the required speed and confidence gates. Refresh limits and verify the hash first. Use the same helper with `--kind submit --approved`.
-
-The helper stays in dry-run mode unless the matching switch in `state/config.json` is enabled and `--approved` is supplied. Restore both switches to `false` after each run. Never edit whitespace or comments to get another timing for an already checked hash.
-
-## Local tools
-
-Run the offline workflow tests with:
+Python 3.10+ and the `okc` CLI from the [challenge site](https://openkernelchallenge.dev/) are required. Challenge runs use the challenge's H200 image; local lint and workflow tests do not need a GPU.
 
 ```bash
 python3 tools/test_tools.py
-```
-
-The loop utility can also refresh limits and report the project state:
-
-```bash
-python3 tools/run_loop.py refresh-limits
+python3 tools/lint_kernel.py variants/muse_bf16_proj/<file>.py
 python3 tools/run_loop.py status
 ```
 
-It does not run a GPU check or submission by itself.
+`tools/submit.py` is a dry-run unless the matching `check_enabled` or `submit_enabled` switch in `state/config.json` and the `--approved` flag are both set.
 
-## Challenge rules
+Agent operating instructions are in [AGENTS.md](AGENTS.md).
 
-- Correctness comes before speed; a tolerance miss scores zero.
-- Do not detect the benchmark, hardcode outputs, cache results across calls, move timed work into `prepare()`, alter the harness or timing, or use network access on the judge.
-- Keep activation and weight precision within the active problem's rules.
-- Submissions must use the Apache-2.0 license.
+## Security
 
-Read the [official challenge rules](https://openkernelchallenge.dev/rules) and the active problem files before implementing a kernel.
+Authentication lives in `~/.okc` via `okc login`. Never commit tokens; `.env` files are ignored.
 
-## Dates
+## License
 
-The kernel track closes at 00:00 on 5 November 2026, America/Los_Angeles. Stop three hours before close. The project target is a working `muse_bf16_proj` by 1 November.
+Apache-2.0
 
 ## Repository map
 
