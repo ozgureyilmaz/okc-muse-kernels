@@ -281,7 +281,7 @@ The follow-up required a new check at least 1.04× aggregate with the 95% CI low
 | v009 `v009_wgmma_rank3_buffers.py` | `131125b48e2de3345f28f0b98dc9b8d6ceaed1308506bf49577763da2104c0` | `542953ee793149f0` | 8/9 pass; compile failure | no score | — | — |
 | v010 `v010_wgmma_official_pipeline.py` | `6f773a4f5b5b100964f8389a84b3e284162b5f55dc4b70191eb72a121764285e` | `1e6ada23626e415a` | 9/9 pass | 0.8034× | 0.7914–0.8155 | 6012.8 µs |
 
-v008 failed because Gluon could not merge an FP32 accumulator with the asynchronous WGMMA accumulator through a conditional. v009 failed because its rank-3 shared layout did not slice to the expected rank-2 tile. v010 used the official two-stage TMA/WGMMA buffering pattern and compiled, but the verify projections remained much slower than SGLang. The raw logs for v008–v010 are in ignored `state/raw/`. The exact v007 raw record remains in the shared checkout used by the public-cleanup task; its completed job is also readable through `okc status`.
+v008 failed because Gluon could not merge an FP32 accumulator with the asynchronous WGMMA accumulator through a conditional. v009 failed because its rank-3 shared layout did not slice to the expected rank-2 tile. v010 used the official two-stage TMA/WGMMA buffering pattern and compiled, but the verify projections remained much slower than SGLang. The raw logs for v008–v010 are in ignored `state/raw/`. The exact v007 source is restored in `variants/muse_bf16_proj/v007_wgmma_verify.py` from this task's generation transcript and its SHA-256 was verified. Its raw log remains in the shared checkout used by the public-cleanup task; job `b717529acb4048e8` is readable through `okc status`.
 
 Per-load ratios from the ratio of summed paired medians:
 
