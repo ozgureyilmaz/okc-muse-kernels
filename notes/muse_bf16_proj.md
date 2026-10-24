@@ -1,6 +1,6 @@
 # muse_bf16_proj
 
-Dense projections for Muse Spark Open, one H200, timed against SGLang. The unchanged starter measured 0.9104×. v006 passed all nine correctness cases and its check measured 1.0225× (95% CI 1.0072–1.0378), meeting the 1.02× gate. Its one scored submission passed and measured 1.0139× (95% CI 0.9987–1.0291). The latest leaderboard readback shows the account at rank 749 of 753.
+Dense projections for Muse Spark Open, one H200, timed against SGLang. The unchanged starter measured 0.9104×. v006 passed all nine correctness cases and its check measured 1.0225× (95% CI 1.0072–1.0378), meeting the 1.02× gate. Its one scored submission passed and measured 1.0139× (95% CI 0.9987–1.0291). The live leaderboard readback at 2026-10-24 16:40 UTC (19:40 Europe/Istanbul) shows rank 751 of 755.
 
 The initial problem details below came from `okc show muse_bf16_proj --json` on 23 Oct 2026 with okc 0.7.1, while logged out. On 2026-10-23, after the user completed login, `okc problems --json` succeeded and `okc init muse_bf16_proj` ran. All six generated files (`TASK.md`, `AGENTS.md`, `baseline.py`, `reference.py`, `checks.py`, and `submission.py`) were read. They are authoritative if they differ from this note. The starter remains untouched; `variants/muse_bf16_proj/v001_baseline_copy.py` is an exact copy and passed lint. Its first check passed as job `0879b1ef893c49d6`; v002's check passed as job `52ed320192494632`. Raw evaluator records remain local under ignored `state/raw/`; aggregate rows are in `state/results.jsonl` and per-shape v002 timings are in this note.
 
@@ -268,11 +268,11 @@ v006 passed 9/9 correctness cases. It keeps the v005 Hopper GEMV path for eligib
 - risk: medium
 - cost: low
 - status: checked-passing
-- note: v006 passed 9/9 cases; check aggregate 1.0225× (95% CI 1.0072–1.0378), then scored job `00e22ad9869b4bb7` passed at 1.0139× (95% CI 0.9987–1.0291). The account last appeared at rank 749/753.
+- note: v006 passed 9/9 cases; check aggregate 1.0225× (95% CI 1.0072–1.0378), then scored job `00e22ad9869b4bb7` passed at 1.0139× (95% CI 0.9987–1.0291). The 16:29 UTC readback showed rank 749/753; the latest 16:40 UTC readback shows 751/755.
 
 ## Rank optimization follow-up (2026-10-24)
 
-The follow-up required a new check at least 1.04× aggregate with the 95% CI lower bound above 1.02× before another scored run. Four unique checks were used; none met that gate. No additional scored submission was sent. The v006 scored result remains the account's recorded score.
+The follow-up required a new check at least 1.04× aggregate with the 95% CI lower bound above 1.02× before another scored run. Four unique checks were used; none met that gate. No additional scored submission was sent. The v006 scored result remains the account's recorded score at 1.0139×. The 2026-10-24 16:40 UTC leaderboard readback (19:40 Europe/Istanbul) showed rank 751/755.
 
 | Candidate | Hash | Job | Correctness | Aggregate | 95% interval | Score time |
 | --- | --- | --- | --- | ---: | --- | ---: |
@@ -385,7 +385,7 @@ Per-load ratios from the ratio of summed paired medians:
 
 1. v006 remains the only scored submission: job `00e22ad9869b4bb7`, 1.0139× (95% CI 0.9987–1.0291).
 2. The four-check rank optimization round produced no candidate meeting 1.04× with CI lower bound above 1.02×; no further scored submission was sent.
-3. The latest leaderboard readback lists `ozgureyilmaz` at rank 749/753.
+3. The 2026-10-24 16:40 UTC leaderboard readback lists `ozgureyilmaz` at rank 751/755; the scored result remains 1.0139×.
 4. Both config switches and Phase 2 remain disabled. The authorized check budget for this optimization round is exhausted; do not start another problem.
 
 ## Loopholes that will not be used

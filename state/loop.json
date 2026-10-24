@@ -1,8 +1,8 @@
 {
   "stage": "rank_followup_no_candidate",
   "active_problem": "muse_bf16_proj",
-  "last_cycle_at": "2026-10-24T16:29:05.277146+00:00",
+  "last_cycle_at": "2026-10-24T16:40:07.446470+00:00",
   "okc_version": "0.7.1",
   "login": "signed in (okc problems --json succeeded on 2026-10-24)",
-  "next_action": "v007-v010 consumed the four authorized optimization checks; v007 and v010 passed correctness but measured 0.7964x and 0.8034x, while v008 and v009 failed Gluon compilation. None met the required 1.04x aggregate with CI lower bound above 1.02x. No additional scored submission was sent. v006 remains the only scored job at 1.0139x; the latest leaderboard readback is rank 749/753. Current server limits: 9 submits and 12 checks remain; preserve the 20% reserve. Both challenge switches and Phase 2 remain false. Do not submit or run another check without new authorization."
+  "next_action": "v007-v010 consumed the four authorized optimization checks; v007 and v010 passed correctness but measured 0.7964x and 0.8034x, while v008 and v009 failed Gluon compilation. None met the required 1.04x aggregate with CI lower bound above 1.02x. No additional scored submission was sent. v006 remains the only scored job at 1.0139x. Live leaderboard readback at 2026-10-24 16:40 UTC (19:40 Europe/Istanbul): rank 751/755. Current server limits: 9 submits and 12 checks remain; preserve the 20% reserve. Both challenge switches and Phase 2 remain false. Do not submit or run another check without new authorization."
 }
