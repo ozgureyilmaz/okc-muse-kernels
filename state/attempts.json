@@ -22,8 +22,8 @@
       },
       "checks": {
         "per_day": 20,
-        "used_local": 4,
-        "remaining_server": 16,
+        "used_local": 8,
+        "remaining_server": 12,
         "history": [
           {
             "at": "2026-10-23T18:14:37.592031+00:00",
@@ -72,9 +72,41 @@
             "variant": "v006_hopper_gemv_router_addmm",
             "hash": "6df4c93a5da945667530c39f5439e6332a1d2240fb1d573158a684c6384444b1",
             "status": "passed"
+          },
+          {
+            "at": "2026-10-24T15:58:21.825625+00:00",
+            "kind": "checks",
+            "job": "b723b3c6cffb4bfe",
+            "variant": "v008_wgmma_pipeline_verify",
+            "hash": "01d426e45e8bb1c6f9be45a9a729de6a6ac44ea461f92de01841e1f157d47ed8",
+            "status": "failed"
+          },
+          {
+            "at": "2026-10-24T15:46:56.195673+00:00",
+            "kind": "checks",
+            "job": "b717529acb4048e8",
+            "variant": "v007_wgmma_verify",
+            "hash": "08c81cf4250dcbc0560db621e8da1ed9dd45a5e95044c60bd8e70a0ab434bae7",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-24T16:08:21.419414+00:00",
+            "kind": "checks",
+            "job": "542953ee793149f0",
+            "variant": "v009_wgmma_rank3_buffers",
+            "hash": "131125b48e2de3345f28f0b36ed6043521cca2a33f8b90fb28ed7539f5fb2ce2",
+            "status": "failed"
+          },
+          {
+            "at": "2026-10-24T16:16:13.378603+00:00",
+            "kind": "checks",
+            "job": "1e6ada23626e415a",
+            "variant": "v010_wgmma_official_pipeline",
+            "hash": "6f773a4f5b5b100964f8389a84b3e284162b5f55dc4b70191eb72a121764285e",
+            "status": "passed"
           }
         ],
-        "used_server": 4
+        "used_server": 8
       }
     },
     "muse_attention_decode": {
@@ -146,5 +178,5 @@
       }
     }
   },
-  "limits_fetched_at": "2026-10-24T15:15:22.365596+00:00"
+  "limits_fetched_at": "2026-10-24T16:29:05.277146+00:00"
 }

@@ -115,6 +115,32 @@ class ParseTests(unittest.TestCase):
         self.assertIsNone(parsed["time_us"])
         self.assertTrue(parsed["confident"])
 
+    def test_evaluator_json_records_compile_failure_and_consumed_job(self):
+        payload = {
+            "board": "muse_bf16_proj",
+            "id": "compile-job",
+            "mode": "check",
+            "status": "done",
+            "result": {
+                "passed": False,
+                "speedup": None,
+                "score_us": None,
+                "records": [
+                    {"event": "test", "status": "pass"} for _ in range(8)
+                ] + [{
+                    "event": "test",
+                    "status": "fail",
+                    "message": "Triton CompilationError: accumulator type mismatch",
+                }],
+            },
+        }
+        parsed = parse_result.parse_output(json.dumps(payload))
+        self.assertEqual(parsed["status"], "failed")
+        self.assertEqual(parsed["job"], "compile-job")
+        self.assertEqual((parsed["tests_passed"], parsed["tests_total"]), (8, 9))
+        self.assertIn("accumulator type mismatch", parsed["message"])
+        self.assertTrue(parsed["confident"])
+
 
 class BudgetTests(unittest.TestCase):
     def test_reserve(self):

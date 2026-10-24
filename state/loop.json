@@ -1,8 +1,8 @@
 {
-  "stage": "scored_candidate_visible",
+  "stage": "rank_followup_no_candidate",
   "active_problem": "muse_bf16_proj",
-  "last_cycle_at": "2026-10-24T15:15:22.365596+00:00",
+  "last_cycle_at": "2026-10-24T16:29:05.277146+00:00",
   "okc_version": "0.7.1",
   "login": "signed in (okc problems --json succeeded on 2026-10-24)",
-  "next_action": "v006 passed its 9/9 check at 1.0225x (95% CI 1.0072-1.0378) and was submitted once as job 00e22ad9869b4bb7. The scored run passed correctness at 1.0139x (95% CI 0.9987-1.0291); leaderboard shows ozgureyilmaz at rank 736/740. One scored submission used; current server limits are 9 submits and 16 checks remaining, with 20% reserve protected. Both challenge switches and Phase 2 remain false. Do not resend the same hash or start another problem."
+  "next_action": "v007-v010 consumed the four authorized optimization checks; v007 and v010 passed correctness but measured 0.7964x and 0.8034x, while v008 and v009 failed Gluon compilation. None met the required 1.04x aggregate with CI lower bound above 1.02x. No additional scored submission was sent. v006 remains the only scored job at 1.0139x; the latest leaderboard readback is rank 749/753. Current server limits: 9 submits and 12 checks remain; preserve the 20% reserve. Both challenge switches and Phase 2 remain false. Do not submit or run another check without new authorization."
 }

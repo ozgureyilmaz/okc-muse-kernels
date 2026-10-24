@@ -6,8 +6,9 @@ Kernel experiments for the [Muse Spark Open Kernel Challenge](https://openkernel
 
 - Active problem: `muse_bf16_proj` only. Other problems and Phase 2 are out of scope.
 - Candidate `v006_hopper_gemv_router_addmm.py` passed all nine correctness cases. Its off-board check measured **1.0225×** (95% CI **1.0072–1.0378×**).
-- Scored job `00e22ad9869b4bb7` passed correctness and measured **1.0139×** (95% CI **0.9987–1.0291×**). The account is visible at rank **736/740**.
-- `state/config.json` keeps `check_enabled` and `submit_enabled` false. Do not resend this hash; the recorded result is in `state/results.jsonl`.
+- Scored job `00e22ad9869b4bb7` passed correctness and measured **1.0139×** (95% CI **0.9987–1.0291×**). The latest leaderboard readback shows rank **749/753**.
+- Four follow-up checks (v007–v010) did not meet the stricter 1.04× / CI lower-bound 1.02× gate. No additional score was submitted.
+- `state/config.json` keeps `check_enabled` and `submit_enabled` false. Do not resend the v006 hash; the recorded results are in `state/results.jsonl`.
 
 See [the problem note](notes/muse_bf16_proj.md) for the specification, candidate history, and per-shape timings. `state/results.jsonl` records aggregate check and submission results. Detailed evaluator logs stay local under the ignored `state/raw/` directory.
 

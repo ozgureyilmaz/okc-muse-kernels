@@ -1,6 +1,6 @@
 # muse_bf16_proj
 
-Dense projections for Muse Spark Open, one H200, timed against SGLang. The unchanged starter measured 0.9104×. v006 passed all nine correctness cases and its check measured 1.0225× (95% CI 1.0072–1.0378), meeting the 1.02× gate. Its one scored submission passed and measured 1.0139× (95% CI 0.9987–1.0291). The account appears on the board at rank 736 of 740.
+Dense projections for Muse Spark Open, one H200, timed against SGLang. The unchanged starter measured 0.9104×. v006 passed all nine correctness cases and its check measured 1.0225× (95% CI 1.0072–1.0378), meeting the 1.02× gate. Its one scored submission passed and measured 1.0139× (95% CI 0.9987–1.0291). The latest leaderboard readback shows the account at rank 749 of 753.
 
 The initial problem details below came from `okc show muse_bf16_proj --json` on 23 Oct 2026 with okc 0.7.1, while logged out. On 2026-10-23, after the user completed login, `okc problems --json` succeeded and `okc init muse_bf16_proj` ran. All six generated files (`TASK.md`, `AGENTS.md`, `baseline.py`, `reference.py`, `checks.py`, and `submission.py`) were read. They are authoritative if they differ from this note. The starter remains untouched; `variants/muse_bf16_proj/v001_baseline_copy.py` is an exact copy and passed lint. Its first check passed as job `0879b1ef893c49d6`; v002's check passed as job `52ed320192494632`. Raw evaluator records remain local under ignored `state/raw/`; aggregate rows are in `state/results.jsonl` and per-shape v002 timings are in this note.
 
@@ -83,7 +83,7 @@ The judge subtracts about 4 µs of CUDA-graph replay overhead from both sides, t
 
 ## Attempt limits
 
-Limits are per problem and reset at 00:00 UTC; they can change with load. Refreshed on 2026-10-24 after the scored run: 1/10 scored submissions and 4/20 checks used, with 9 submissions and 16 checks remaining on the server. Preserve the 20% reserve: at most 8 scored submissions and 16 checks per day.
+Limits are per problem and reset at 00:00 UTC; they can change with load. Refreshed on 2026-10-24 after the four-check rank optimization round: 1/10 scored submissions and 8/20 checks used, with 9 submissions and 12 checks remaining on the server. Preserve the 20% reserve: at most 8 scored submissions and 16 checks per day.
 
 | kind | per day | 20% reserve | may spend |
 | --- | --- | --- | --- |
@@ -268,7 +268,108 @@ v006 passed 9/9 correctness cases. It keeps the v005 Hopper GEMV path for eligib
 - risk: medium
 - cost: low
 - status: checked-passing
-- note: v006 passed 9/9 cases; check aggregate 1.0225× (95% CI 1.0072–1.0378), then scored job `00e22ad9869b4bb7` passed at 1.0139× (95% CI 0.9987–1.0291). The account appears at rank 736/740.
+- note: v006 passed 9/9 cases; check aggregate 1.0225× (95% CI 1.0072–1.0378), then scored job `00e22ad9869b4bb7` passed at 1.0139× (95% CI 0.9987–1.0291). The account last appeared at rank 749/753.
+
+## Rank optimization follow-up (2026-10-24)
+
+The follow-up required a new check at least 1.04× aggregate with the 95% CI lower bound above 1.02× before another scored run. Four unique checks were used; none met that gate. No additional scored submission was sent. The v006 scored result remains the account's recorded score.
+
+| Candidate | Hash | Job | Correctness | Aggregate | 95% interval | Score time |
+| --- | --- | --- | --- | ---: | --- | ---: |
+| v007 `v007_wgmma_verify.py` | `08c81cf4250dcbc0560db621e8da1ed9dd45a5e95044c60bd8e70a0ab434bae7` | `b717529acb4048e8` | 9/9 pass | 0.7964× | 0.7845–0.8084 | 6065.5 µs |
+| v008 `v008_wgmma_pipeline_verify.py` | `01d426e45e8bb1c6f9be45a9a729de6a6ac44ea461f92de01841e1f157d47ed8` | `b723b3c6cffb4bfe` | 8/9 pass; compile failure | no score | — | — |
+| v009 `v009_wgmma_rank3_buffers.py` | `131125b48e2de3345f28f0b98dc9b8d6ceaed1308506bf49577763da2104c0` | `542953ee793149f0` | 8/9 pass; compile failure | no score | — | — |
+| v010 `v010_wgmma_official_pipeline.py` | `6f773a4f5b5b100964f8389a84b3e284162b5f55dc4b70191eb72a121764285e` | `1e6ada23626e415a` | 9/9 pass | 0.8034× | 0.7914–0.8155 | 6012.8 µs |
+
+v008 failed because Gluon could not merge an FP32 accumulator with the asynchronous WGMMA accumulator through a conditional. v009 failed because its rank-3 shared layout did not slice to the expected rank-2 tile. v010 used the official two-stage TMA/WGMMA buffering pattern and compiled, but the verify projections remained much slower than SGLang. The raw logs for v008–v010 are in ignored `state/raw/`. The exact v007 raw record remains in the shared checkout used by the public-cleanup task; its completed job is also readable through `okc status`.
+
+Per-load ratios from the ratio of summed paired medians:
+
+| Load | v007 | v010 |
+| --- | ---: | ---: |
+| decode 1 | 1.0673× | 1.0853× |
+| decode 16 | 0.9977× | 1.0026× |
+| decode 32 | 1.0029× | 0.9938× |
+| verify 1 | 1.0080× | 1.0014× |
+| verify 16 | 0.4569× | 0.5977× |
+| verify 32 | 0.5189× | 0.4155× |
+
+### v007 per-shape check timings
+
+| Load | m | Layer | SGLang µs | Candidate µs | Ratio |
+| --- | ---: | --- | ---: | ---: | ---: |
+| decode 1 | 1 | qkv_gate | 14.064 | 13.364 | 1.0524× |
+| decode 1 | 1 | o | 6.816 | 6.260 | 1.0888× |
+| decode 1 | 1 | pooler | 21.440 | 19.335 | 1.1089× |
+| decode 1 | 1 | unpooler | 7.072 | 6.593 | 1.0726× |
+| decode 1 | 1 | router | 10.336 | 10.408 | 0.9931× |
+| decode 16 | 16 | qkv_gate | 13.728 | 13.767 | 0.9972× |
+| decode 16 | 16 | o | 6.896 | 6.977 | 0.9884× |
+| decode 16 | 16 | pooler | 21.232 | 21.448 | 0.9899× |
+| decode 16 | 16 | unpooler | 18.560 | 18.574 | 0.9992× |
+| decode 16 | 16 | router | 15.216 | 15.042 | 1.0116× |
+| decode 32 | 32 | qkv_gate | 14.640 | 14.600 | 1.0028× |
+| decode 32 | 32 | o | 7.088 | 7.105 | 0.9976× |
+| decode 32 | 32 | pooler | 21.936 | 21.937 | 1.0000× |
+| decode 32 | 32 | unpooler | 19.040 | 19.080 | 0.9979× |
+| decode 32 | 32 | router | 15.424 | 15.178 | 1.0162× |
+| verify 1 | 8 | qkv_gate | 14.288 | 13.993 | 1.0211× |
+| verify 1 | 8 | o | 6.768 | 6.680 | 1.0132× |
+| verify 1 | 8 | pooler | 21.536 | 21.443 | 1.0043× |
+| verify 1 | 8 | unpooler | 6.944 | 6.870 | 1.0107× |
+| verify 1 | 8 | router | 26.096 | 26.048 | 1.0019× |
+| verify 16 | 128 | qkv_gate | 17.008 | 59.872 | 0.2841× |
+| verify 16 | 128 | o | 7.232 | 7.152 | 1.0112× |
+| verify 16 | 128 | pooler | 25.184 | 67.220 | 0.3747× |
+| verify 16 | 128 | unpooler | 20.000 | 37.035 | 0.5400× |
+| verify 16 | 128 | router | 16.256 | 16.248 | 1.0005× |
+| verify 32 | 256 | qkv_gate | 19.648 | 60.981 | 0.3222× |
+| verify 32 | 256 | o | 9.376 | 9.321 | 1.0059× |
+| verify 32 | 256 | pooler | 30.928 | 67.639 | 0.4572× |
+| verify 32 | 256 | unpooler | 23.968 | 40.139 | 0.5971× |
+| verify 32 | 256 | router | 17.584 | 17.534 | 1.0029× |
+
+### v010 per-shape check timings
+
+| Load | m | Layer | SGLang µs | Candidate µs | Ratio |
+| --- | ---: | --- | ---: | ---: | ---: |
+| decode 1 | 1 | qkv_gate | 14.112 | 13.292 | 1.0617× |
+| decode 1 | 1 | o | 6.640 | 5.938 | 1.1182× |
+| decode 1 | 1 | pooler | 21.408 | 18.975 | 1.1282× |
+| decode 1 | 1 | unpooler | 6.880 | 6.174 | 1.1143× |
+| decode 1 | 1 | router | 10.304 | 10.300 | 1.0004× |
+| decode 16 | 16 | qkv_gate | 14.128 | 14.088 | 1.0028× |
+| decode 16 | 16 | o | 6.704 | 6.572 | 1.0200× |
+| decode 16 | 16 | pooler | 21.184 | 21.353 | 0.9921× |
+| decode 16 | 16 | unpooler | 18.656 | 18.633 | 1.0013× |
+| decode 16 | 16 | router | 14.784 | 14.614 | 1.0116× |
+| decode 32 | 32 | qkv_gate | 14.240 | 14.523 | 0.9805× |
+| decode 32 | 32 | o | 6.816 | 6.824 | 0.9988× |
+| decode 32 | 32 | pooler | 21.808 | 22.029 | 0.9900× |
+| decode 32 | 32 | unpooler | 18.752 | 18.968 | 0.9886× |
+| decode 32 | 32 | router | 15.520 | 15.270 | 1.0163× |
+| verify 1 | 8 | qkv_gate | 14.144 | 14.022 | 1.0087× |
+| verify 1 | 8 | o | 6.704 | 6.687 | 1.0026× |
+| verify 1 | 8 | pooler | 21.472 | 21.517 | 0.9979× |
+| verify 1 | 8 | unpooler | 6.816 | 6.827 | 0.9983× |
+| verify 1 | 8 | router | 26.112 | 26.088 | 1.0009× |
+| verify 16 | 128 | qkv_gate | 16.880 | 35.021 | 0.4820× |
+| verify 16 | 128 | o | 7.136 | 7.091 | 1.0064× |
+| verify 16 | 128 | pooler | 24.560 | 41.647 | 0.5897× |
+| verify 16 | 128 | unpooler | 19.888 | 41.692 | 0.4770× |
+| verify 16 | 128 | router | 16.320 | 16.401 | 0.9951× |
+| verify 32 | 256 | qkv_gate | 20.016 | 67.813 | 0.2952× |
+| verify 32 | 256 | o | 9.136 | 8.886 | 1.0282× |
+| verify 32 | 256 | pooler | 31.008 | 75.614 | 0.4101× |
+| verify 32 | 256 | unpooler | 24.352 | 75.466 | 0.3227× |
+| verify 32 | 256 | router | 17.408 | 17.512 | 0.9941× |
+
+### Optimization sources
+
+- [Pinned SGLang Hopper BF16 GEMV](https://github.com/sgl-project/sglang/blob/a55ab7d5ae1bba59ac351e55026fe7f7644ecc5f/python/sglang/kernels/ops/gemm/hopper_bf16_gemv.py): keeps the proven m=1 decode path.
+- [Pinned SGLang unquantized BF16 dispatcher](https://github.com/sgl-project/sglang/blob/a55ab7d5ae1bba59ac351e55026fe7f7644ecc5f/python/sglang/srt/layers/quantization/unquant.py): the H200 baseline falls through to `F.linear` unless optional backends apply.
+- [Triton Gluon WGMMA tutorial](https://triton-lang.org/main/getting-started/tutorials/gluon/wgmma.html) and [TMA tutorial](https://triton-lang.org/main/getting-started/tutorials/gluon/tma.html): asynchronous MMA, barriers, and double buffering informed v007–v010.
+- [Triton matrix multiplication tutorial](https://triton-lang.org/main/getting-started/tutorials/03-matrix-multiplication.html) and [NVIDIA CUDA Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html): tile reuse, grid size, and occupancy informed shape selection.
 
 ## Dead ends
 
@@ -282,10 +383,10 @@ v006 passed 9/9 correctness cases. It keeps the v005 Hopper GEMV path for eligib
 
 ## What happens next
 
-1. v006 passed its 9/9 correctness check at 1.0225× with a 95% CI lower bound above 1.0×; the exact checked hash was `6df4c93a5da945667530c39f5439e6332a1d2240fb1d573158a684c6384444b1`.
-2. One scored submission was sent as job `00e22ad9869b4bb7`; status passed, speedup 1.0139×, and its 95% interval includes 1.0×.
-3. The leaderboard lists `ozgureyilmaz` at rank 736/740.
-4. Both config switches and Phase 2 remain disabled. Do not resend the hash or start another problem.
+1. v006 remains the only scored submission: job `00e22ad9869b4bb7`, 1.0139× (95% CI 0.9987–1.0291).
+2. The four-check rank optimization round produced no candidate meeting 1.04× with CI lower bound above 1.02×; no further scored submission was sent.
+3. The latest leaderboard readback lists `ozgureyilmaz` at rank 749/753.
+4. Both config switches and Phase 2 remain disabled. The authorized check budget for this optimization round is exhausted; do not start another problem.
 
 ## Loopholes that will not be used
 
