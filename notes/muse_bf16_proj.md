@@ -1,6 +1,6 @@
 # muse_bf16_proj
 
-Dense projections for Muse Spark Open, one H200, timed against SGLang. The unchanged starter measured 0.9104×. v006 passed all nine correctness cases and its check measured 1.0225× (95% CI 1.0072–1.0378), meeting the 1.02× gate. Its one scored submission passed and measured 1.0139× (95% CI 0.9987–1.0291). The live leaderboard readback at 2026-10-24 16:40 UTC (19:40 Europe/Istanbul) shows rank 751 of 755.
+Dense projections for Muse Spark Open, one H200, timed against SGLang. The unchanged starter measured 0.9104×. v006 is the only scored submission: 1.0139× (95% CI 0.9987–1.0291). The best check is now v027: 1.1804× (95% CI 1.1626–1.1981), 9/9 correctness, normalized 4092.7 µs. The live board at 2026-10-27T16:53:30.411355+00:00 shows rank 1153/1158, with rank 10 at 1.5696×. No new scored run was sent; top ten remains unmet.
 
 The initial problem details below came from `okc show muse_bf16_proj --json` on 23 Oct 2026 with okc 0.7.1, while logged out. On 2026-10-23, after the user completed login, `okc problems --json` succeeded and `okc init muse_bf16_proj` ran. All six generated files (`TASK.md`, `AGENTS.md`, `baseline.py`, `reference.py`, `checks.py`, and `submission.py`) were read. They are authoritative if they differ from this note. The starter remains untouched; `variants/muse_bf16_proj/v001_baseline_copy.py` is an exact copy and passed lint. Its first check passed as job `0879b1ef893c49d6`; v002's check passed as job `52ed320192494632`. Raw evaluator records remain local under ignored `state/raw/`; aggregate rows are in `state/results.jsonl` and per-shape v002 timings are in this note.
 
@@ -83,7 +83,7 @@ The judge subtracts about 4 µs of CUDA-graph replay overhead from both sides, t
 
 ## Attempt limits
 
-Limits are per problem and reset at 00:00 UTC; they can change with load. Refreshed on 2026-10-24 after the four-check rank optimization round: 1/10 scored submissions and 8/20 checks used, with 9 submissions and 12 checks remaining on the server. Preserve the 20% reserve: at most 8 scored submissions and 16 checks per day.
+Limits reset at 00:00 UTC and can change with load. The final refresh on 2026-10-27T16:53:29.468271+00:00 shows 16/20 checks and 0/10 scored submissions today. The user approved at most 16 checks on 27 October and one scored submission only after an exact-hash 9/9 result with CI lower bound above live rank 10. All 16 checks are used and no candidate met the score gate. Preserve the four-check reserve; no additional GPU runs are authorized, including after reset. All switches are false. Refresh limits before every future approved run.
 
 | kind | per day | 20% reserve | may spend |
 | --- | --- | --- | --- |
@@ -151,6 +151,54 @@ H1 and H9 were checked and rejected on performance. H10 passed its check gate an
 - cost: high
 - status: checked-no-gain
 - note: `variants/muse_bf16_proj/v002_triton_splitk_small_m.py` splits K for non-router m<=32, writes FP32 partials, then reduces and stores BF16 in a second kernel. All nine correctness cases passed, but the aggregate off-board ratio was 0.8145×. The implementation adds a second launch and FP32 scratch; this run does not isolate their individual cost. Router and m>32 use the starter path. Do not submit this candidate for a score.
+
+### H11 deepgemm-sm90-dense
+- generator: deep_gemm
+- expected_gain: improve BF16 dense projections across decode-16/32 and verify-16/32, including qkv_gate, o, pooler, and unpooler.
+- risk: high
+- cost: high
+- status: checked-passing
+- note: Candidate `variants/muse_bf16_proj/v012_deepgemm_dense_sm90.py` uses the DeepGEMM BF16 NT API with `compiled_dims="nk"`, keeps v006 m=1 Hopper GEMVs, and retains a PyTorch fallback if the package/API is unavailable. Check job `72a41d512f964de7` passed 9/9 at 1.0301× (95% CI 1.0147–1.0456). Its graph-capture path worked in this run. Shape-level gains are uneven; see the recorded check and raw log.
+
+### H12 router-hilo-kcat
+- generator: pytorch_bf16
+- expected_gain: replace the router FP32 m=1/m=8 path and split hi/lo path at larger m with one BF16 hi+lo matrix product; router is 26.4 µs at m=8 in the scored v006 run.
+- risk: medium
+- cost: low
+- status: checked-passing
+- note: Candidate `variants/muse_bf16_proj/v011_router_concat_hilo.py` prepares BF16 hi/lo weights concatenated along K, then forms a fresh `[x, x]` activation inside `kernel_fn`. The allowed router hi+lo exception applies at every m. Check job `88d7246abe254117` passed 9/9 at 1.1095× (95% CI 1.0929–1.1262), including the strict router tolerance. The router-only path cannot reach top ten.
+
+### H13 router-fp32-gemv-small-m
+- generator: triton
+- expected_gain: improve the m=1 and m=8 router loads while using the original FP32 weights and exact FP32 accumulation.
+- risk: medium
+- cost: medium
+- status: checked-passing
+- note: Candidate `variants/muse_bf16_proj/v013_router_fp32_gemv.py` uses one warp-reduced FP32 GEMV kernel for m<=8 and leaves other v006 paths unchanged. Check job `cdb5ab4185ce47d6` passed 9/9 at 1.0735× (95% CI 1.0574–1.0896). The m=1 and m=8 router GEMVs improved, but the aggregate is below v011.
+
+### H14 quack-fixed-sm90-dense
+- generator: quack_cute_sm90_fixed_dense
+- expected_gain: improve dense BF16 paths using fixed QuACK tiles after compile-cache preparation.
+- risk: high
+- cost: high
+- status: checked-no-gain
+- note: Corrected candidate `variants/muse_bf16_proj/v014_quack_dense_sm90.py` matches QuACK v0.6.5's positional compile-cache key. Check job `184ffdecad084e0c` passed 9/9 but measured 0.5976× (95% CI 0.5886–0.6066); dense m>8 timings regressed substantially.
+
+### H15 integrate-router-and-deepgemm
+- generator: pytorch_bf16_router_concat_deepgemm_sm90
+- expected_gain: combine the measured router and dense-layer paths in one candidate.
+- risk: medium
+- cost: low
+- status: checked-below-live-threshold
+- note: Candidate `variants/muse_bf16_proj/v015_router_concat_deepgemm_sm90.py` combines v011's router hi/lo concatenation with v012's DeepGEMM dense dispatch and preserves v006 m=1 GEMVs. Check job `01128730b46b4d96` passed 9/9 at 1.1265× (95% CI 1.1096–1.1434), below the live rank-10 threshold.
+
+### H16 router-fp32-registeraccum
+- generator: triton_fp32_router_register_accum
+- expected_gain: keep the small-m router's per-K-lane FP32 accumulators in registers and reduce once.
+- risk: medium
+- cost: medium
+- status: checked-passing
+- note: v016 passed 9/9 as job `60c2730723084074` at 1.1283× (95% CI 1.1114–1.1453). Its exact FP32 small-router branch is retained in the final v027 composition, which also passed 9/9.
 
 ### H2 cute-wgmma-verify32
 - generator: cutlass_flashinfer
@@ -270,7 +318,7 @@ v006 passed 9/9 correctness cases. It keeps the v005 Hopper GEMV path for eligib
 - status: checked-passing
 - note: v006 passed 9/9 cases; check aggregate 1.0225× (95% CI 1.0072–1.0378), then scored job `00e22ad9869b4bb7` passed at 1.0139× (95% CI 0.9987–1.0291). The 16:29 UTC readback showed rank 749/753; the latest 16:40 UTC readback shows 751/755.
 
-## Rank optimization follow-up (2026-10-24)
+## Rank optimization follow-up (2026-10-24, historical)
 
 The follow-up required a new check at least 1.04× aggregate with the 95% CI lower bound above 1.02× before another scored run. Four unique checks were used; none met that gate. No additional scored submission was sent. The v006 scored result remains the account's recorded score at 1.0139×. The 2026-10-24 16:40 UTC leaderboard readback (19:40 Europe/Istanbul) showed rank 751/755.
 
@@ -371,6 +419,113 @@ Per-load ratios from the ratio of summed paired medians:
 - [Triton Gluon WGMMA tutorial](https://triton-lang.org/main/getting-started/tutorials/gluon/wgmma.html) and [TMA tutorial](https://triton-lang.org/main/getting-started/tutorials/gluon/tma.html): asynchronous MMA, barriers, and double buffering informed v007–v010.
 - [Triton matrix multiplication tutorial](https://triton-lang.org/main/getting-started/tutorials/03-matrix-multiplication.html) and [NVIDIA CUDA Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html): tile reuse, grid size, and occupancy informed shape selection.
 
+## Top-ten check round (2026-10-27)
+
+The managing chat received direct human approval for at most 16 total checks today, preserving four of the daily 20 checks, plus one conditional scored submission. The condition was 9/9 correctness on the exact checked hash and a check 95% CI lower bound above the live rank-10 speedup at promotion. No further checks are authorized after these 16, including after a daily reset.
+
+All 16 unique candidates below ran once through `tools/submit.py` after limit refreshes. All passed 9/9; a passing test does not imply a performance gain. Every result is tied to its logged source hash; the checked file bytes were verified at this checkpoint. No scored submission was sent. The final limit refresh shows 16/20 checks and 0/10 scored submissions today, all switches false, and no pending jobs. The final check finished at 16:53:12 UTC (19:53:12 Europe/Istanbul).
+
+| Candidate | SHA-256 prefix | Job | Correctness | Speedup | 95% CI |
+| --- | --- | --- | --- | ---: | --- |
+| [v011](../variants/muse_bf16_proj/v011_router_concat_hilo.py) | `ef6ef68b0e2d` | `88d7246abe254117` | 9/9 | 1.1095× | 1.0929–1.1262 |
+| [v012](../variants/muse_bf16_proj/v012_deepgemm_dense_sm90.py) | `8c5aa696e25d` | `72a41d512f964de7` | 9/9 | 1.0301× | 1.0147–1.0456 |
+| [v013](../variants/muse_bf16_proj/v013_router_fp32_gemv.py) | `794f45e9f145` | `cdb5ab4185ce47d6` | 9/9 | 1.0735× | 1.0574–1.0896 |
+| [v015](../variants/muse_bf16_proj/v015_router_concat_deepgemm_sm90.py) | `48c40a8941e9` | `01128730b46b4d96` | 9/9 | 1.1265× | 1.1096–1.1434 |
+| [v014](../variants/muse_bf16_proj/v014_quack_dense_sm90.py) | `b9df97da9edb` | `184ffdecad084e0c` | 9/9 | 0.5976× | 0.5886–0.6066 |
+| [v016](../variants/muse_bf16_proj/v016_router_fp32_registeraccum.py) | `a4dde2408cdc` | `60c2730723084074` | 9/9 | 1.1283× | 1.1114–1.1453 |
+| [v018](../variants/muse_bf16_proj/v018_n_tiled_bmm_dense.py) | `2d826fc411fd` | `99ad7372ac854123` | 9/9 | 0.8696× | 0.8565–0.8826 |
+| [v017](../variants/muse_bf16_proj/v017_router_registeraccum_deepgemm_sm90.py) | `d2691974adca` | `519bb14bda964807` | 9/9 | 1.1477× | 1.1305–1.1649 |
+| [v020](../variants/muse_bf16_proj/v020_lowm_dense_registeraccum.py) | `d59ba9f7a7ec` | `bbc03a5175eb4732` | 9/9 | 0.9171× | 0.9033–0.9308 |
+| [v019](../variants/muse_bf16_proj/v019_quack_wide_splitk.py) | `e430de8271d3` | `1385339c0f9944c4` | 9/9 | 0.8999× | 0.8864–0.9134 |
+| [v023](../variants/muse_bf16_proj/v023_flashinfer_tinygemm_bf16.py) | `e59741c210a6` | `bd296596f2934bb8` | 9/9 | 1.1276× | 1.1106–1.1445 |
+| [v025](../variants/muse_bf16_proj/v025_flashinfer_tinygemm_all_small_m.py) | `588a311f48a3` | `277a6257ded54938` | 9/9 | 1.1110× | 1.0943–1.1276 |
+| [v024](../variants/muse_bf16_proj/v024_router_hilo_splitk_mma.py) | `66f65784a064` | `96b8a4c3c0674044` | 9/9 | 1.1046× | 1.0880–1.1211 |
+| [v026](../variants/muse_bf16_proj/v026_transposed_dense.py) | `ddbb87de3c23` | `e040c762228c4812` | 9/9 | 1.1146× | 1.0978–1.1313 |
+| [v028](../variants/muse_bf16_proj/v028_lowm_tensorcore_splitk.py) | `5cfa2d84d401` | `aaeaf188253f4a4a` | 9/9 | 1.0882× | 1.0718–1.1045 |
+| [v027](../variants/muse_bf16_proj/v027_selective_measured_paths.py) | `e696a2e8f05d` | `9c28d3d304da4276` | 9/9 | 1.1804× | 1.1626–1.1981 |
+
+Best check: v027, SHA-256 `e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30`, job `9c28d3d304da4276`, 1.180353×, 95% CI 1.162647–1.198058, normalized 4092.675 µs. That is 15.28% less normalized time than SGLang's 4830.8 µs. The live board read at 2026-10-27T16:53:30.411355+00:00 reports public rank 1153/1158, score 1.0139×, rank 10 1.5696× / 3077.632 µs, and leader 1.6367×. v027's lower CI is below rank 10; it cannot be promoted under the approved condition. It needs approximately 24.80% additional normalized latency reduction. The top-ten objective remains unmet.
+
+### Final dispatch and evidence
+
+| Layer/range | v027 path | Measured evidence |
+| --- | --- | --- |
+| Router m≤8 | Original FP32 weights, per-K-lane FP32 register accumulation, one reduction | v016; v027 m=1 5.500 µs and m=8 6.826 µs |
+| Router 8<m≤64 | BF16 hi/lo Tensor Core split-K, FP32 partials and output | v024; v027 m=16 7.016 µs and m=32 8.076 µs |
+| Router m>64 | Fresh `[x,x]` times prepared concatenated hi/lo weights, FP32 output | v011; v027 m=128 11.471 µs and m=256 13.280 µs |
+| Unpooler 1≤m≤8; pooler 2≤m≤8 | FlashInfer TinyGEMM BF16, FP32 accumulation, PDL disabled | v023/v025; v027 unpooler m=1 4.640 µs and m=8 4.803 µs |
+| Other eligible dense m=1 | Existing SGLang Hopper GEMV | v006 and component checks |
+| Pooler 8<m≤192 | Native DeepGEMM SM90 BF16 | v012/v015/v017; v027 m=16/32/128 18.639/19.306/21.437 µs |
+| Remaining dense calls | `F.linear` | Preserves baseline paths where alternatives regressed |
+
+These are broad shape/layer ranges, including unscored sizes, rather than exact scored-shape matching. Weight hi/lo preparation is the router's allowed precision exception. Dense weights remain BF16, activations remain BF16, and no input-derived state persists across calls. Preparation compiles/loads modules and transforms weights without a dummy GEMM.
+
+### Rejected mechanisms
+
+- QuACK narrow tiles (v014) and wider parallel split-K (v019) passed but lost on aggregate. Do not repeat them without a new mechanism and resource argument.
+- N-tiled batched GEMM (v018) was graph-compatible and numerically correct, but qkv m=16/32 took about 66–68 µs. Its borrowed output layout and zero-stride input were supported; the problem was measured speed.
+- Dense SIMT register accumulation (v020) did not improve aggregate performance.
+- Applying TinyGEMM to every small-M layer (v023/v025) severely regressed O and did not improve qkv. Retain only the measured pooler/unpooler ranges.
+- Router split-K (v024) improved m=16/32 but regressed m=128/256 against concatenation; retain it only for 8<m≤64.
+- Transposing dense GEMM orientation/output (v026) did not produce a useful new range beyond selected native DeepGEMM.
+- Wide-N Triton Tensor Core dense split-K (v028) still paid for a second launch and FP32 partial traffic. O m=8/16/32 took about 9.7–10.0 µs versus about 7 µs; full unpooler m=16/32 took about 21–22 µs versus about 18.5 µs. Its pooler changes were around 1%, inside noise.
+
+### v027 per-shape timings
+
+Judge-adjusted medians in microseconds. The normalized aggregate uses the geometric mean of per-load ratios, not a geometric mean of the 30 individual layer ratios. Each layer has weight 62.
+
+| Load | m | Layer | SGLang µs | v027 µs | Ratio |
+| --- | ---: | --- | ---: | ---: | ---: |
+| decode 1 | 1 | qkv_gate | 14.080 | 13.379 | 1.0524× |
+| decode 1 | 1 | o | 6.592 | 5.997 | 1.0992× |
+| decode 1 | 1 | pooler | 21.424 | 18.995 | 1.1279× |
+| decode 1 | 1 | unpooler | 6.624 | 4.640 | 1.4275× |
+| decode 1 | 1 | router | 10.304 | 5.500 | 1.8735× |
+| decode 16 | 16 | qkv_gate | 13.920 | 14.082 | 0.9885× |
+| decode 16 | 16 | o | 6.112 | 6.088 | 1.0039× |
+| decode 16 | 16 | pooler | 21.472 | 18.639 | 1.1520× |
+| decode 16 | 16 | unpooler | 18.464 | 18.592 | 0.9931× |
+| decode 16 | 16 | router | 14.848 | 7.016 | 2.1162× |
+| decode 32 | 32 | qkv_gate | 14.208 | 14.581 | 0.9744× |
+| decode 32 | 32 | o | 6.784 | 6.929 | 0.9791× |
+| decode 32 | 32 | pooler | 22.112 | 19.306 | 1.1453× |
+| decode 32 | 32 | unpooler | 18.816 | 18.986 | 0.9911× |
+| decode 32 | 32 | router | 15.136 | 8.076 | 1.8743× |
+| verify 1 | 8 | qkv_gate | 14.400 | 14.596 | 0.9866× |
+| verify 1 | 8 | o | 6.720 | 6.647 | 1.0110× |
+| verify 1 | 8 | pooler | 20.992 | 18.706 | 1.1222× |
+| verify 1 | 8 | unpooler | 7.088 | 4.803 | 1.4758× |
+| verify 1 | 8 | router | 26.032 | 6.826 | 3.8139× |
+| verify 16 | 128 | qkv_gate | 17.472 | 17.472 | 1.0000× |
+| verify 16 | 128 | o | 7.200 | 7.121 | 1.0112× |
+| verify 16 | 128 | pooler | 24.640 | 21.437 | 1.1494× |
+| verify 16 | 128 | unpooler | 19.760 | 19.694 | 1.0033× |
+| verify 16 | 128 | router | 16.496 | 11.471 | 1.4380× |
+| verify 32 | 256 | qkv_gate | 19.360 | 19.497 | 0.9930× |
+| verify 32 | 256 | o | 9.152 | 9.088 | 1.0070× |
+| verify 32 | 256 | pooler | 30.496 | 30.582 | 0.9972× |
+| verify 32 | 256 | unpooler | 24.384 | 24.138 | 1.0102× |
+| verify 32 | 256 | router | 17.312 | 13.280 | 1.3036× |
+
+| Load | Ratio of summed times | v027 total ×62 |
+| --- | ---: | ---: |
+| decode 1 | 1.2167× | 3007.66 µs |
+| decode 16 | 1.1614× | 3993.86 µs |
+| decode 32 | 1.1352× | 4208.40 µs |
+| verify 1 | 1.4586× | 3197.74 µs |
+| verify 16 | 1.1085× | 4786.10 µs |
+| verify 32 | 1.0426× | 5988.32 µs |
+
+### Primary source compatibility
+
+- [Pinned SGLang dependency versions](https://github.com/sgl-project/sglang/blob/a55ab7d5ae1bba59ac351e55026fe7f7644ecc5f/python/pyproject.toml): FlashInfer 0.7.0.post1, sgl-deep-gemm 0.2.1.post1, QuACK 0.6.5, and CUTLASS DSL 4.8.0 informed exact API research.
+- [FlashInfer TinyGEMM at the pinned tag](https://github.com/flashinfer-ai/flashinfer/blob/v0.7.0.post1/flashinfer/gemm/routergemm.py): BF16 API and compile/load entry point. Preparation preloads its module; the timed call supplies fresh input/output tensors and `use_pdl=False`.
+- [DeepGEMM public API](https://github.com/sgl-project/DeepGEMM/blob/v0.2.1.post1/deep_gemm/__init__.py) and [SM90 implementation](https://github.com/sgl-project/DeepGEMM/blob/v0.2.1.post1/csrc/apis/gemm.hpp): `bf16_gemm_nt` with native SM90 dispatch selected by the library's deterministic setting. This setting is global to DeepGEMM; it does not change Torch's global numerical mode. Actual check profiles confirmed native SM90 kernels.
+- [QuACK GEMM](https://github.com/Dao-AILab/quack/blob/v0.6.5/quack/gemm.py) and [cache wrapper](https://github.com/Dao-AILab/quack/blob/v0.6.5/quack/cache/jit.py): fixed-config compilation used identical positional keys in preparation and execution. Correcting compatibility did not make these candidates faster.
+- [PyTorch BMM tests](https://github.com/pytorch/pytorch/blob/v2.14.1/test/test_linalg.py) and [CUDA BLAS implementation](https://github.com/pytorch/pytorch/blob/v2.14.1/aten/src/ATen/native/cuda/Blas.cpp): supported expanded input and borrowed output layout were checked before rejecting v018 on performance.
+
+The remaining target and proposed experiments are in [the next-round technical plan](top10-next-round.md). They require new GPU-run authorization and must preserve the daily reserve. None is a top-ten performance claim.
+
 ## Dead ends
 
 - Fusing the five layers. Each `kernel_fn` call is one layer.
@@ -383,10 +538,10 @@ Per-load ratios from the ratio of summed paired medians:
 
 ## What happens next
 
-1. v006 remains the only scored submission: job `00e22ad9869b4bb7`, 1.0139× (95% CI 0.9987–1.0291).
-2. The four-check rank optimization round produced no candidate meeting 1.04× with CI lower bound above 1.02×; no further scored submission was sent.
-3. The 2026-10-24 16:40 UTC leaderboard readback lists `ozgureyilmaz` at rank 751/755; the scored result remains 1.0139×.
-4. Both config switches and Phase 2 remain disabled. The authorized check budget for this optimization round is exhausted; do not start another problem.
+1. v006 remains the only scored submission, job `00e22ad9869b4bb7`, 1.0139×.
+2. Preserve v027's checked source `e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30` and all recorded candidates unchanged. Its 1.1626× lower CI is below the 1.5696× live rank-10 threshold; it has no scored promotion under the approved gate.
+3. All 16 authorized checks are used; four remain reserved. Further GPU work needs fresh explicit approval. A daily reset is not approval. No job is pending and check, submit, and Phase 2 switches are false.
+4. Continue with the [dense-layer technical plan](top10-next-round.md) only within newly authorized scope. Do not repeat a recorded hash, bypass source deduplication, enable Phase 2, or claim a leaderboard improvement from a check.
 
 ## Loopholes that will not be used
 

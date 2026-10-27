@@ -1,8 +1,38 @@
 {
-  "stage": "top_ten_local_research",
+  "stage": "daily_check_reserve_reached",
   "active_problem": "muse_bf16_proj",
-  "last_cycle_at": "2026-10-27T14:40:20+00:00",
+  "last_cycle_at": "2026-10-27T16:55:37.515064+00:00",
   "okc_version": "0.7.1",
-  "login": "signed in (user-reported okc problems --json succeeded on 2026-10-27)",
-  "next_action": "Top-ten goal: current user-reported rank 1147/1151 at 1.0139x; tenth-place threshold 1.5687x (3079.5657 us), leader 1.6367x. Preserve v001-v010 sources/results. Prepare and locally validate v011 router concatenation and production H200 dense-path alternatives. No GPU check or scored submission until explicit approval; the prior four-check allowance is exhausted. User-reported daily usage is 0/20 checks and 0/10 submits; refresh limits before any approved run. Preserve the 20% reserve. Both challenge switches and Phase 2 remain false."
+  "login": "signed in (verified by okc problems --json refresh on 2026-10-27)",
+  "next_action": "No further GPU runs authorized: 16/20 checks used with four reserved. v027 is best checked but its CI lower bound is below live rank10; do not submit it under the conditional approval. Preserve sources and continue only offline planning until new explicit authorization.",
+  "authorization": {
+    "date_europe_istanbul": "2026-10-27",
+    "max_daily_checks_total": 16,
+    "reserve_fraction": 0.2,
+    "max_additional_scored_submissions": 1,
+    "scored_gate": "9/9 correctness; exact checked hash; check 95% CI lower bound above live rank-10 speedup at promotion",
+    "source": "Direct human approval in managing chat: Rezerv i\u00e7inde check turu + ko\u015fullu tek submit",
+    "status": "check_cap_reached_no_candidate_met_scored_gate"
+  },
+  "best_check": {
+    "variant_id": "v027_selective_measured_paths",
+    "hash": "e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30",
+    "job": "9c28d3d304da4276",
+    "speedup": 1.1803526965067401,
+    "time_us": 4092.6750235728505,
+    "tests_passed": 9,
+    "tests_total": 9,
+    "speedup_ci": [
+      1.162647406059139,
+      1.198057986954341
+    ]
+  },
+  "leaderboard_observation": {
+    "fetched_at": "2026-10-27T16:53:30.411355+00:00",
+    "rank": 1153,
+    "ranked": 1158,
+    "public_speedup": 1.0139,
+    "rank10_speedup": 1.5696,
+    "rank10_time_us": 3077.632128958767
+  }
 }
