@@ -16,14 +16,22 @@
             "variant": "v006_hopper_gemv_router_addmm",
             "hash": "6df4c93a5da945667530c39f5439e6332a1d2240fb1d573158a684c6384444b1",
             "status": "passed"
+          },
+          {
+            "at": "2026-10-27T17:20:45.082075+00:00",
+            "kind": "scored",
+            "job": "20251c5f78804f1f",
+            "variant": "v027_selective_measured_paths",
+            "hash": "e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30",
+            "status": "passed"
           }
         ],
         "used_server": 1
       },
       "checks": {
         "per_day": 20,
-        "used_local": 4,
-        "remaining_server": 16,
+        "used_local": 16,
+        "remaining_server": 4,
         "history": [
           {
             "at": "2026-10-23T18:14:37.592031+00:00",
@@ -72,9 +80,169 @@
             "variant": "v006_hopper_gemv_router_addmm",
             "hash": "6df4c93a5da945667530c39f5439e6332a1d2240fb1d573158a684c6384444b1",
             "status": "passed"
+          },
+          {
+            "at": "2026-10-24T15:58:21.825625+00:00",
+            "kind": "checks",
+            "job": "b723b3c6cffb4bfe",
+            "variant": "v008_wgmma_pipeline_verify",
+            "hash": "01d426e45e8bb1c6f9be45a9a729de6a6ac44ea461f92de01841e1f157d47ed8",
+            "status": "failed"
+          },
+          {
+            "at": "2026-10-24T15:46:56.195673+00:00",
+            "kind": "checks",
+            "job": "b717529acb4048e8",
+            "variant": "v007_wgmma_verify",
+            "hash": "08c81cf4250dcbc0560db621e8da1ed9dd45a5e95044c60bd8e70a0ab434bae7",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-24T16:08:21.419414+00:00",
+            "kind": "checks",
+            "job": "542953ee793149f0",
+            "variant": "v009_wgmma_rank3_buffers",
+            "hash": "131125b48e2de3345f28f0b36ed6043521cca2a33f8b90fb28ed7539f5fb2ce2",
+            "status": "failed"
+          },
+          {
+            "at": "2026-10-24T16:16:13.378603+00:00",
+            "kind": "checks",
+            "job": "1e6ada23626e415a",
+            "variant": "v010_wgmma_official_pipeline",
+            "hash": "6f773a4f5b5b100964f8389a84b3e284162b5f55dc4b70191eb72a121764285e",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T15:35:04.020685+00:00",
+            "kind": "checks",
+            "job": "88d7246abe254117",
+            "variant": "v011_router_concat_hilo",
+            "hash": "ef6ef68b0e2d542c3965417bcb6fda3fe4ce0b35b10e7dabc8ab57887c79185e",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T15:38:46.146155+00:00",
+            "kind": "checks",
+            "job": "72a41d512f964de7",
+            "variant": "v012_deepgemm_dense_sm90",
+            "hash": "8c5aa696e25dea4b85c2a4eeebb99c19ba0245251d0dc7e8fb9093cd57eafc99",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T15:41:17.530139+00:00",
+            "kind": "checks",
+            "job": "cdb5ab4185ce47d6",
+            "variant": "v013_router_fp32_gemv",
+            "hash": "794f45e9f1458e4d64e1f7d70335849b4da02ad4598b31bf7d037c2f6e43e64f",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T15:49:49.441561+00:00",
+            "kind": "checks",
+            "job": "01128730b46b4d96",
+            "variant": "v015_router_concat_deepgemm_sm90",
+            "hash": "48c40a8941e93da071f37ee8ec7bf992d81cc7b6ffef70c5f330bffa4bce6230",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T15:52:58.769101+00:00",
+            "kind": "checks",
+            "job": "184ffdecad084e0c",
+            "variant": "v014_quack_dense_sm90",
+            "hash": "b9df97da9edb5b9974a08d44dc64ea4fa6917d5af09a5386c48aba4b04f9eabb",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T16:04:08.799712+00:00",
+            "kind": "checks",
+            "job": "60c2730723084074",
+            "variant": "v016_router_fp32_registeraccum",
+            "hash": "a4dde2408cdc252879394bd85b07fb195fcac62905be8501cce562025d6668dc",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T16:08:40.623300+00:00",
+            "kind": "checks",
+            "job": "99ad7372ac854123",
+            "variant": "v018_n_tiled_bmm_dense",
+            "hash": "2d826fc411fd35a5366f200a7dfdf11801c2b0d48294f0532767632844cddc91",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T16:11:39.204692+00:00",
+            "kind": "checks",
+            "job": "519bb14bda964807",
+            "variant": "v017_router_registeraccum_deepgemm_sm90",
+            "hash": "d2691974adca410a16abda5c2ff1dbb4d8b08758d19e741ba44e64b1abda1e80",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T16:17:04.991968+00:00",
+            "kind": "checks",
+            "job": "bbc03a5175eb4732",
+            "variant": "v020_lowm_dense_registeraccum",
+            "hash": "d59ba9f7a7ec0449d3a1d49218b722b310d89251b45dd673a5b236e00e97197e",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T16:19:23.914055+00:00",
+            "kind": "checks",
+            "job": "1385339c0f9944c4",
+            "variant": "v019_quack_wide_splitk",
+            "hash": "e430de8271d3908b405f7f2fbb5f4444c6c703934873c168e4554bf1a5e8ab72",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T16:26:13.150194+00:00",
+            "kind": "checks",
+            "job": "bd296596f2934bb8",
+            "variant": "v023_flashinfer_tinygemm_bf16",
+            "hash": "e59741c210a6e5e21b9998e41b396dfd9c0d6c3b4f69f835ba6f77774e278ad5",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T16:35:40.878699+00:00",
+            "kind": "checks",
+            "job": "277a6257ded54938",
+            "variant": "v025_flashinfer_tinygemm_all_small_m",
+            "hash": "588a311f48a3299e99ac7766c1410e24660817195403f5642f286846d443c716",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T16:39:19.256264+00:00",
+            "kind": "checks",
+            "job": "96b8a4c3c0674044",
+            "variant": "v024_router_hilo_splitk_mma",
+            "hash": "66f65784a06427c98aa53ff99be9e947b81936dba28f39ea61f838a132647798",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T16:42:00.484153+00:00",
+            "kind": "checks",
+            "job": "e040c762228c4812",
+            "variant": "v026_transposed_dense",
+            "hash": "ddbb87de3c23875d7b57dd503a17c4258e2b660539a351a96a101a00e8cf1223",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T16:48:13.920872+00:00",
+            "kind": "checks",
+            "job": "aaeaf188253f4a4a",
+            "variant": "v028_lowm_tensorcore_splitk",
+            "hash": "5cfa2d84d40115dc5ec05f17ff0972193d558b7353c1efbf3d015b9351ddca3e",
+            "status": "passed"
+          },
+          {
+            "at": "2026-10-27T16:51:35.108493+00:00",
+            "kind": "checks",
+            "job": "9c28d3d304da4276",
+            "variant": "v027_selective_measured_paths",
+            "hash": "e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30",
+            "status": "passed"
           }
         ],
-        "used_server": 4
+        "used_server": 16
       }
     },
     "muse_attention_decode": {
@@ -87,9 +255,9 @@
         "used_server": 0
       },
       "checks": {
-        "per_day": 10,
+        "per_day": 20,
         "used_local": 0,
-        "remaining_server": 10,
+        "remaining_server": 20,
         "history": [],
         "used_server": 0
       }
@@ -121,9 +289,9 @@
         "used_server": 0
       },
       "checks": {
-        "per_day": 10,
+        "per_day": 20,
         "used_local": 0,
-        "remaining_server": 10,
+        "remaining_server": 20,
         "history": [],
         "used_server": 0
       }
@@ -138,13 +306,13 @@
         "used_server": 0
       },
       "checks": {
-        "per_day": 10,
+        "per_day": 20,
         "used_local": 0,
-        "remaining_server": 10,
+        "remaining_server": 20,
         "history": [],
         "used_server": 0
       }
     }
   },
-  "limits_fetched_at": "2026-10-24T15:15:22.365596+00:00"
+  "limits_fetched_at": "2026-10-27T17:23:34.407835+00:00"
 }

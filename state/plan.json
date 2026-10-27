@@ -1,34 +1,182 @@
 {
   "problem": "muse_bf16_proj",
-  "generated_at": "2026-10-23T17:49:18.591700+00:00",
+  "generated_at": "2026-10-27T17:26:01.665560+00:00",
   "stage": "scored_candidate_visible",
-  "next_action": "Keep v006 as the scored candidate and leave both challenge switches disabled.",
+  "next_action": "v027 is scored and visible on the leaderboard. Preserve its checked bytes and recorded scored job; do not resubmit it. All 16 authorized checks and the single separately approved scored promotion are used. No further GPU runs authorized; preserve four-check reserve and all switches false. Continue only offline work until fresh approval.",
   "window": "open until 2026-11-04T21:00:00-08:00",
-  "assignments": [
+  "assignments": [],
+  "lint": [
     {
-      "title": "H1 triton-splitk-small-m",
-      "generator": "triton",
-      "expected_gain": "the decode loads, if cuBLAS misses bandwidth at m=1..32. Pooler and qkv_gate are the bytes that matter.",
-      "risk": "medium",
-      "file": null
+      "file": "variants/muse_bf16_proj/v001_baseline_copy.py",
+      "ok": true,
+      "errors": []
     },
     {
-      "title": "H2 cute-wgmma-verify32",
-      "generator": "cutlass_flashinfer",
-      "expected_gain": "verify-32 pooler, unpooler, and qkv_gate, which are at the 989 TFLOP/s roof. Bandwidth-only tuning cannot reach those floors.",
-      "risk": "high",
-      "file": null
+      "file": "variants/muse_bf16_proj/v002_triton_splitk_small_m.py",
+      "ok": true,
+      "errors": []
     },
     {
-      "title": "H3 prepare-repack",
-      "generator": "triton",
-      "expected_gain": "none by itself. It is the layout H1 and H2 need.",
-      "risk": "low",
-      "file": null
+      "file": "variants/muse_bf16_proj/v003_triton_onepass_hilo.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v004_bf16_gemv_hilo.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v005_hopper_gemv_hilo.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v006_hopper_gemv_router_addmm.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v007_wgmma_verify.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v008_wgmma_pipeline_verify.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v009_wgmma_rank3_buffers.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v010_wgmma_official_pipeline.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v011_router_concat_hilo.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v012_deepgemm_dense_sm90.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v013_router_fp32_gemv.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v014_quack_dense_sm90.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v015_router_concat_deepgemm_sm90.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v016_router_fp32_registeraccum.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v017_router_registeraccum_deepgemm_sm90.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v018_n_tiled_bmm_dense.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v019_quack_wide_splitk.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v020_lowm_dense_registeraccum.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v023_flashinfer_tinygemm_bf16.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v024_router_hilo_splitk_mma.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v025_flashinfer_tinygemm_all_small_m.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v026_transposed_dense.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v027_selective_measured_paths.py",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "file": "variants/muse_bf16_proj/v028_lowm_tensorcore_splitk.py",
+      "ok": true,
+      "errors": []
     }
   ],
-  "lint": [],
   "consecutive_misses": 0,
-  "best_speedup": null,
-  "phase2_enabled": false
+  "best_speedup": 1.1717726912393547,
+  "phase2_enabled": false,
+  "best_check_speedup": 1.1803526965067401,
+  "best_check": {
+    "variant_id": "v027_selective_measured_paths",
+    "hash": "e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30",
+    "job": "9c28d3d304da4276",
+    "speedup": 1.1803526965067401,
+    "time_us": 4092.6750235728505,
+    "tests_passed": 9,
+    "tests_total": 9,
+    "speedup_ci": [
+      1.162647406059139,
+      1.198057986954341
+    ]
+  },
+  "leaderboard_observation": {
+    "fetched_at": "2026-10-27T17:23:35.293809+00:00",
+    "rank": 820,
+    "ranked": 1160,
+    "public_speedup": 1.1718,
+    "rank10_speedup": 1.5696,
+    "rank10_time_us": 3077.632128958767
+  },
+  "checks_used_today": 16,
+  "checks_reserved": 4,
+  "best_scored": {
+    "variant_id": "v027_selective_measured_paths",
+    "hash": "e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30",
+    "job": "20251c5f78804f1f",
+    "speedup": 1.1717726912393547,
+    "time_us": 4122.64258769385,
+    "tests_passed": 9,
+    "tests_total": 9,
+    "speedup_ci": [
+      1.1541961008707644,
+      1.189349281607945
+    ]
+  },
+  "scored_used_today": 1,
+  "workflow_tests_passed": 18
 }

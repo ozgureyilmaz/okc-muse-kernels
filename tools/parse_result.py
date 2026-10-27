@@ -105,6 +105,9 @@ def parse_text_output(text: str, problem: str | None = None) -> dict:
 
 
 def parse_json_output(payload: object, problem: str | None = None) -> dict:
+    structured = _parse_evaluator_job(payload, problem)
+    if structured is not None:
+        return structured
     flat = _flatten(payload)
     status, halt = _status_from_json(flat)
     tests_passed, tests_total = _tests_from_json(flat)
@@ -127,6 +130,54 @@ def parse_json_output(payload: object, problem: str | None = None) -> dict:
         "confident": confident,
         "message": _message(status, error),
         "json_keys": sorted(flat),
+    }
+
+
+def _parse_evaluator_job(payload: object, problem: str | None) -> dict | None:
+    """Parse the completed job JSON returned by the current OKC CLI."""
+    if not isinstance(payload, dict):
+        return None
+    result = payload.get("result")
+    job = payload.get("id")
+    if not isinstance(result, dict) or not isinstance(result.get("passed"), bool):
+        return None
+    if not isinstance(job, str) or not job:
+        return None
+
+    status = "passed" if result["passed"] else "failed"
+    records = result.get("records")
+    tests = [
+        record for record in records
+        if isinstance(record, dict) and record.get("event") == "test"
+    ] if isinstance(records, list) else []
+    tests_passed = sum(record.get("status") == "pass" for record in tests) if tests else None
+    tests_total = len(tests) if tests else None
+
+    error = result.get("error")
+    if not isinstance(error, str) or not error.strip():
+        failed = [record.get("message") for record in tests if record.get("status") != "pass"]
+        error = next((message for message in failed if isinstance(message, str) and message.strip()), None)
+    if not error:
+        log_tail = result.get("log_tail")
+        error = log_tail[:1200] if isinstance(log_tail, str) and log_tail else None
+    elif len(error) > 1200:
+        error = error[:1200]
+
+    score_us = result.get("score_us")
+    return {
+        "source": "json",
+        "status": status,
+        "problem": payload.get("board") or problem,
+        "job": job,
+        "speedup": _number({"speedup": result.get("speedup")}, ("speedup",)),
+        "time_us": float(score_us) if isinstance(score_us, (int, float)) else None,
+        "tests_passed": tests_passed,
+        "tests_total": tests_total,
+        "error": error,
+        "halt": False,
+        "confident": True,
+        "message": _message(status, error),
+        "json_keys": sorted(_flatten(payload)),
     }
 
 
