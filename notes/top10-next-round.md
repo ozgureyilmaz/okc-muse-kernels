@@ -2,7 +2,9 @@
 
 ## Where the measured work stands
 
-The best completed check is v027 at **1.18035×** (95% CI 1.16265–1.19806; normalized time 4092.7 µs). The live board read at 2026-10-27 16:53:30 UTC put the rank-10 threshold at **1.5696× / 3077.632 µs**. Closing that time gap requires another **24.8% latency reduction** from v027, or about a 33% increase in score. v027 is a useful composition result, but it is far from promotion.
+The best completed check is v027 at **1.18035×** (95% CI 1.16265–1.19806; normalized time 4092.7 µs). The live board read at 2026-10-27 16:53:30 UTC put the rank-10 threshold at **1.5696× / 3077.632 µs**. Closing that time gap requires another **24.8% latency reduction** from v027, or about a 33% increase in score. v027 is a useful composition result, but it remains below the top-ten target.
+
+After this analysis, the user separately authorized one scored promotion. Identical v027 source passed 9/9 at **1.17177×** (95% CI 1.15420–1.18935; 4122.6 µs). The 2026-10-27T17:23:35.293809+00:00 read-back confirmed rank **820/1160**. From that scored point, the rank-10 gap is **25.3%** and the 1.60× target needs **26.8%** further normalized latency reduction. The check-based table below remains a planning reference, not the public scored measurement.
 
 The geometric mean weights each of the six loads equally. The table shows weighted load sums from v027’s own benchmark records, an even per-load allocation for 1.5696×, and the task’s theoretical floors. The even allocation is a planning reference; the geometric-mean score permits uneven gains.
 
@@ -40,7 +42,7 @@ The strongest overall path needs a material dense-kernel improvement on both dec
 
 ## Execution and acceptance
 
-Keep v027 immutable as the comparison candidate and v006 as the public scored result. For a future authorized round, use Luna/xhigh workers for disjoint source work: one dense-kernel worker, one lossless-codec worker, and one independent reviewer. The managing agent owns the check queue and merges only independently reviewed bytes; workers do not touch limits, config, ledgers, or submit tools. Freeze and record the source hash before each check, and retain the file unchanged afterward.
+Keep v027 immutable as both the comparison candidate and the current public scored result; v006 is historical. For a future authorized round, use Luna/xhigh workers for disjoint source work: one dense-kernel worker, one lossless-codec worker, and one independent reviewer. The managing agent owns the check queue and merges only independently reviewed bytes; workers do not touch limits, config, ledgers, or submit tools. Freeze and record the source hash before each check, and retain the file unchanged afterward.
 
 Before spending a check, validate API availability, syntax/lint, bounded shared-memory/register use, all scratch writers and readers, and broad shape ranges. Lossless packing needs an offline exact-reconstruction and actual-byte-accounting gate before a GPU candidate is worth checking.
 

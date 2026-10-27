@@ -1,6 +1,6 @@
 # muse_bf16_proj
 
-Dense projections for Muse Spark Open, one H200, timed against SGLang. The unchanged starter measured 0.9104×. v006 is the only scored submission: 1.0139× (95% CI 0.9987–1.0291). The best check is now v027: 1.1804× (95% CI 1.1626–1.1981), 9/9 correctness, normalized 4092.7 µs. The live board at 2026-10-27T16:53:30.411355+00:00 shows rank 1153/1158, with rank 10 at 1.5696×. No new scored run was sent; top ten remains unmet.
+Dense projections for Muse Spark Open, one H200, timed against SGLang. The unchanged starter measured 0.9104×. The current scored candidate is v027: 1.1718× (95% CI 1.1542–1.1893), 9/9 correctness, normalized 4122.6 µs, job `20251c5f78804f1f`. The same source checked at 1.1804× (95% CI 1.1626–1.1981). The live board at 2026-10-27T17:23:35.293809+00:00 shows rank 820/1160, with rank 10 at 1.5696×. Top ten remains unmet.
 
 The initial problem details below came from `okc show muse_bf16_proj --json` on 23 Oct 2026 with okc 0.7.1, while logged out. On 2026-10-23, after the user completed login, `okc problems --json` succeeded and `okc init muse_bf16_proj` ran. All six generated files (`TASK.md`, `AGENTS.md`, `baseline.py`, `reference.py`, `checks.py`, and `submission.py`) were read. They are authoritative if they differ from this note. The starter remains untouched; `variants/muse_bf16_proj/v001_baseline_copy.py` is an exact copy and passed lint. Its first check passed as job `0879b1ef893c49d6`; v002's check passed as job `52ed320192494632`. Raw evaluator records remain local under ignored `state/raw/`; aggregate rows are in `state/results.jsonl` and per-shape v002 timings are in this note.
 
@@ -83,7 +83,7 @@ The judge subtracts about 4 µs of CUDA-graph replay overhead from both sides, t
 
 ## Attempt limits
 
-Limits reset at 00:00 UTC and can change with load. The final refresh on 2026-10-27T16:53:29.468271+00:00 shows 16/20 checks and 0/10 scored submissions today. The user approved at most 16 checks on 27 October and one scored submission only after an exact-hash 9/9 result with CI lower bound above live rank 10. All 16 checks are used and no candidate met the score gate. Preserve the four-check reserve; no additional GPU runs are authorized, including after reset. All switches are false. Refresh limits before every future approved run.
+Limits reset at 00:00 UTC and can change with load. The latest refresh at 2026-10-27T17:23:34.407835+00:00 shows 16/20 checks and 1/10 scored submissions today. The 16-check authorization is exhausted and the four-check reserve is untouched. The user separately authorized one v027 scored promotion and merge into master after the earlier top-ten-only gate was not met. That promotion completed; no additional GPU runs are authorized, including after reset. All switches are false. Refresh limits before every future approved run.
 
 | kind | per day | 20% reserve | may spend |
 | --- | --- | --- | --- |
@@ -423,7 +423,7 @@ Per-load ratios from the ratio of summed paired medians:
 
 The managing chat received direct human approval for at most 16 total checks today, preserving four of the daily 20 checks, plus one conditional scored submission. The condition was 9/9 correctness on the exact checked hash and a check 95% CI lower bound above the live rank-10 speedup at promotion. No further checks are authorized after these 16, including after a daily reset.
 
-All 16 unique candidates below ran once through `tools/submit.py` after limit refreshes. All passed 9/9; a passing test does not imply a performance gain. Every result is tied to its logged source hash; the checked file bytes were verified at this checkpoint. No scored submission was sent. The final limit refresh shows 16/20 checks and 0/10 scored submissions today, all switches false, and no pending jobs. The final check finished at 16:53:12 UTC (19:53:12 Europe/Istanbul).
+All 16 unique candidates below ran once through `tools/submit.py` after limit refreshes. All passed 9/9; a passing test does not imply a performance gain. Every result is tied to its logged source hash; the checked file bytes were verified at this checkpoint. No scored submission was sent during this check round. Its checkpoint refresh showed 16/20 checks and 0/10 scored submissions, all switches false, and no pending jobs. The final check finished at 16:53:12 UTC (19:53:12 Europe/Istanbul).
 
 | Candidate | SHA-256 prefix | Job | Correctness | Speedup | 95% CI |
 | --- | --- | --- | --- | ---: | --- |
@@ -444,7 +444,7 @@ All 16 unique candidates below ran once through `tools/submit.py` after limit re
 | [v028](../variants/muse_bf16_proj/v028_lowm_tensorcore_splitk.py) | `5cfa2d84d401` | `aaeaf188253f4a4a` | 9/9 | 1.0882× | 1.0718–1.1045 |
 | [v027](../variants/muse_bf16_proj/v027_selective_measured_paths.py) | `e696a2e8f05d` | `9c28d3d304da4276` | 9/9 | 1.1804× | 1.1626–1.1981 |
 
-Best check: v027, SHA-256 `e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30`, job `9c28d3d304da4276`, 1.180353×, 95% CI 1.162647–1.198058, normalized 4092.675 µs. That is 15.28% less normalized time than SGLang's 4830.8 µs. The live board read at 2026-10-27T16:53:30.411355+00:00 reports public rank 1153/1158, score 1.0139×, rank 10 1.5696× / 3077.632 µs, and leader 1.6367×. v027's lower CI is below rank 10; it cannot be promoted under the approved condition. It needs approximately 24.80% additional normalized latency reduction. The top-ten objective remains unmet.
+Best check: v027, SHA-256 `e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30`, job `9c28d3d304da4276`, 1.180353×, 95% CI 1.162647–1.198058, normalized 4092.675 µs. That is 15.28% less normalized time than SGLang's 4830.8 µs. The live board read at 2026-10-27T16:53:30.411355+00:00 reports public rank 1153/1158, score 1.0139×, rank 10 1.5696× / 3077.632 µs, and leader 1.6367×. v027's lower CI was below rank 10, so it did not meet the check round's conditional promotion gate. A later direct user instruction separately authorized its scored promotion, recorded below. It needs approximately 24.80% additional normalized latency reduction. The top-ten objective remains unmet.
 
 ### Final dispatch and evidence
 
@@ -526,6 +526,27 @@ Judge-adjusted medians in microseconds. The normalized aggregate uses the geomet
 
 The remaining target and proposed experiments are in [the next-round technical plan](top10-next-round.md). They require new GPU-run authorization and must preserve the daily reserve. None is a top-ten performance claim.
 
+## Scored promotion (2026-10-27)
+
+The user explicitly requested submitting v027 and then merging the work into GitHub master. This superseded the earlier top-ten-only condition for one exact-hash scored promotion. Limits were refreshed, the prior 9/9 check and unchanged source hash were verified, and `tools/submit.py --kind submit --approved` ran once. Check and submit switches were restored false afterward.
+
+Scored job `20251c5f78804f1f` passed 9/9 and measured **1.171773×** (95% CI **1.154196–1.189349**), normalized **4122.643 µs**. The source is `e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30`, identical to the check. It finished at 2026-10-27T17:22:42.165847+00:00; the live read at 2026-10-27T17:23:35.293809+00:00 confirmed rank **820/1160**, public speedup **1.1718×**. This is 14.66% less normalized time than SGLang; the current rank-10 point requires another 25.35% reduction. The check/scored point difference is within their reported confidence intervals.
+
+The ledger now contains two historical scored jobs in total: v006 and v027. Today's counters are 16/20 checks and 1/10 scored submissions. The saved best kernel under `state/best/muse_bf16_proj/submission.py` is byte-identical to v027. No second scored run or new check was sent.
+
+Local workflow repair: scored result rows use `kind="submit"`, while summaries previously recognized only legacy `"scored"`. Both labels now count as scored results, and a best-source update compares against earlier ledger entries so an already-appended new result can replace the saved best. Regression tests cover actual submit labels, check exclusion, promotion after append, and retention of the better kernel after a lower score. The local workflow suite passes 18 tests.
+
+| Load | Ratio of scored load sums | Scored v027 total ×62 |
+| --- | ---: | ---: |
+| decode 1 | 1.1994× | 3058.57 µs |
+| decode 16 | 1.1594× | 4022.18 µs |
+| decode 32 | 1.1425× | 4152.90 µs |
+| verify 1 | 1.4180× | 3292.14 µs |
+| verify 16 | 1.1034× | 4790.15 µs |
+| verify 32 | 1.0413× | 6009.18 µs |
+
+Full scored output is local and ignored at `state/raw/submit-e696a2e8f05d.log`; the committed ledger records the exact source, job, aggregate, and correctness.
+
 ## Dead ends
 
 - Fusing the five layers. Each `kernel_fn` call is one layer.
@@ -538,10 +559,10 @@ The remaining target and proposed experiments are in [the next-round technical p
 
 ## What happens next
 
-1. v006 remains the only scored submission, job `00e22ad9869b4bb7`, 1.0139×.
-2. Preserve v027's checked source `e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30` and all recorded candidates unchanged. Its 1.1626× lower CI is below the 1.5696× live rank-10 threshold; it has no scored promotion under the approved gate.
-3. All 16 authorized checks are used; four remain reserved. Further GPU work needs fresh explicit approval. A daily reset is not approval. No job is pending and check, submit, and Phase 2 switches are false.
-4. Continue with the [dense-layer technical plan](top10-next-round.md) only within newly authorized scope. Do not repeat a recorded hash, bypass source deduplication, enable Phase 2, or claim a leaderboard improvement from a check.
+1. Preserve the current scored v027 source `e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30` and job `20251c5f78804f1f`: 1.1718×, 9/9. Its best-source copy and metadata are in `state/best/muse_bf16_proj/`.
+2. v006 is historical; do not resubmit either recorded source. The public leaderboard read-back is 820/1160 at 1.1718×. Top ten remains an unmet objective.
+3. All 16 authorized checks and the separately approved single scored promotion are used; four checks remain reserved. Further GPU work needs fresh explicit approval. No job is pending and check, submit, and Phase 2 switches are false.
+4. The [dense-layer technical plan](top10-next-round.md) defines future experiments. Preserve the challenge rules and stop deadline; no new check or scored run is implied by that plan.
 
 ## Loopholes that will not be used
 

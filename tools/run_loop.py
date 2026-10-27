@@ -168,7 +168,7 @@ def _consecutive_misses(results: list[dict], margin: float) -> int:
     passed = [
         row for row in results
         if row.get("status") == "passed"
-        and row.get("kind", "scored") == "scored"
+        and row.get("kind", "scored") in ("submit", "scored")
         and row.get("speedup") is not None
     ]
     if not passed:

@@ -6,8 +6,8 @@
       "status": "active",
       "scored": {
         "per_day": 10,
-        "used_local": 0,
-        "remaining_server": 10,
+        "used_local": 1,
+        "remaining_server": 9,
         "history": [
           {
             "at": "2026-10-24T15:08:50.632950+00:00",
@@ -16,9 +16,17 @@
             "variant": "v006_hopper_gemv_router_addmm",
             "hash": "6df4c93a5da945667530c39f5439e6332a1d2240fb1d573158a684c6384444b1",
             "status": "passed"
+          },
+          {
+            "at": "2026-10-27T17:20:45.082075+00:00",
+            "kind": "scored",
+            "job": "20251c5f78804f1f",
+            "variant": "v027_selective_measured_paths",
+            "hash": "e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30",
+            "status": "passed"
           }
         ],
-        "used_server": 0
+        "used_server": 1
       },
       "checks": {
         "per_day": 20,
@@ -306,5 +314,5 @@
       }
     }
   },
-  "limits_fetched_at": "2026-10-27T16:53:29.468271+00:00"
+  "limits_fetched_at": "2026-10-27T17:23:34.407835+00:00"
 }

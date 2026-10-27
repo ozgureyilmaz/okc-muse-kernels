@@ -1,8 +1,8 @@
 {
-  "variant_id": "v006_hopper_gemv_router_addmm",
-  "generator": "sglang_hopper_gemv_torch_addmm",
-  "hash": "6df4c93a5da945667530c39f5439e6332a1d2240fb1d573158a684c6384444b1",
-  "speedup": 1.0139129765812975,
-  "job": "00e22ad9869b4bb7",
-  "at": "2026-10-24T15:08:50.632950+00:00"
+  "variant_id": "v027_selective_measured_paths",
+  "generator": "measured_router_splitk_tinygemm_pooler_deepgemm_selective",
+  "hash": "e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30",
+  "speedup": 1.1717726912393547,
+  "job": "20251c5f78804f1f",
+  "at": "2026-10-27T17:20:45.082075+00:00"
 }

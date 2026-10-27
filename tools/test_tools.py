@@ -253,11 +253,47 @@ class SubmitPromotionTests(unittest.TestCase):
         self.assertEqual(header["variant"], "v001_baseline_copy")
 
     def test_consecutive_small_gains_count_as_misses(self):
+        for kind in ("submit", "scored"):
+            with self.subTest(kind=kind):
+                rows = [
+                    {"problem": "muse_bf16_proj", "status": "passed", "kind": kind, "speedup": speed}
+                    for speed in (1.0, 1.10, 1.111, 1.12, 1.13)
+                ]
+                self.assertEqual(run_loop._consecutive_misses(rows, 0.02), 3)
+
+    def test_best_speedup_counts_submits_and_legacy_scored_but_not_checks(self):
         rows = [
-            {"problem": "muse_bf16_proj", "status": "passed", "kind": "scored", "speedup": speed}
-            for speed in (1.0, 1.10, 1.111, 1.12, 1.13)
+            {"problem": "muse_bf16_proj", "status": "passed", "kind": "scored", "speedup": 1.10},
+            {"problem": "muse_bf16_proj", "status": "passed", "kind": "submit", "speedup": 1.18},
+            {"problem": "muse_bf16_proj", "status": "passed", "kind": "check", "speedup": 2.0},
+            {"problem": "muse_bf16_proj", "status": "failed", "kind": "submit", "speedup": 3.0},
         ]
-        self.assertEqual(run_loop._consecutive_misses(rows, 0.02), 3)
+        self.assertEqual(common.best_speedup("muse_bf16_proj", rows), 1.18)
+
+    def test_best_source_updates_after_append_and_survives_a_lower_score(self):
+        row = {
+            "problem": "muse_bf16_proj", "kind": "submit", "status": "passed",
+            "variant_id": "new", "generator": "pytorch", "hash": "a" * 64,
+            "speedup": 1.18, "job": "new-job", "at": "2026-10-27T12:00:00+00:00",
+        }
+        earlier = dict(row, variant_id="old", speedup=1.01, job="old-job")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            variant = root / "candidate.py"
+            variant.write_text("new checked source\n")
+            best = root / "best"
+            with patch.object(common, "BEST", best):
+                with patch.object(common, "load_results", return_value=[earlier, row]):
+                    submit._maybe_update_best("muse_bf16_proj", variant, row)
+                saved = best / "muse_bf16_proj"
+                self.assertEqual((saved / "submission.py").read_text(), "new checked source\n")
+                self.assertEqual(json.loads((saved / "meta.json").read_text())["job"], "new-job")
+                lower = dict(row, variant_id="lower", speedup=1.15, job="lower-job")
+                variant.write_text("lower scoring source\n")
+                with patch.object(common, "load_results", return_value=[earlier, row, lower]):
+                    submit._maybe_update_best("muse_bf16_proj", variant, lower)
+                self.assertEqual((saved / "submission.py").read_text(), "new checked source\n")
+                self.assertEqual(json.loads((saved / "meta.json").read_text())["job"], "new-job")
 
 
 class StatusTests(unittest.TestCase):

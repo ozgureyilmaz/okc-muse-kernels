@@ -8,21 +8,22 @@ Generated challenge files define the task and rules. After local initialization,
 
 | Candidate | Run | Correctness | Speedup (95% CI) | Normalized time |
 | --- | --- | --- | ---: | ---: |
-| v006 | Scored | 9/9 | 1.0139× (0.9987–1.0291) | 4764.5 µs |
-| v027 | Check | 9/9 | **1.1804× (1.1626–1.1981)** | **4092.7 µs** |
+| v006 | Previous scored | 9/9 | 1.0139× (0.9987–1.0291) | 4764.5 µs |
+| v027 | Check | 9/9 | 1.1804× (1.1626–1.1981) | 4092.7 µs |
+| v027 | **Scored** | **9/9** | **1.1718× (1.1542–1.1893)** | **4122.6 µs** |
 
-v027 is the best off-board check. It uses FP32 register accumulation for small routers, BF16 hi/lo Tensor Core split-K for medium routers, hi/lo concatenation for larger routers, selected FlashInfer TinyGEMM paths, and native DeepGEMM for medium-size pooler calls. Other projections retain the measured starter/Hopper paths. Its exact source hash and all 30 timings are in the [round results](notes/muse_bf16_proj.md#top-ten-check-round-2026-10-27) and [`state/results.jsonl`](state/results.jsonl).
+v027 is the current scored candidate and the best off-board check. Scored job `20251c5f78804f1f` promoted the exact checked source hash without edits. It uses FP32 register accumulation for small routers, BF16 hi/lo Tensor Core split-K for medium routers, hi/lo concatenation for larger routers, selected FlashInfer TinyGEMM paths, and native DeepGEMM for medium-size pooler calls. Other projections retain the measured starter/Hopper paths. Its exact source hash and all 30 timings are in the [round results](notes/muse_bf16_proj.md#top-ten-check-round-2026-10-27) and [`state/results.jsonl`](state/results.jsonl).
 
-**Top ten has not been reached.** The live read at 2026-10-27T16:53:30.411355+00:00 shows the account at rank 1153/1158, with the v006 scored value of 1.0139×. Rank 10 is 1.5696×. v027 needs about 24.8% more normalized latency reduction to reach that point. A check does not update the leaderboard, and no new scored submission was sent.
+**Top ten has not been reached.** The live read at 2026-10-27T17:23:35.293809+00:00 shows the account at rank **820/1160**, with a scored value of **1.1718×**. Rank 10 is 1.5696×. The current scored point needs about 25.3% more normalized latency reduction to reach that threshold. The 1.1804× check and 1.1718× scored results are separate measurements of identical source.
 
 ## Scope and status
 
 - Only `muse_bf16_proj`; the other problems and Phase 2 remain untouched.
 - All 16 checks authorized for 27 October completed with 9/9 correctness. Several candidates were slower; see the recorded results.
-- Refreshed counters: 16/20 checks and 0/10 scored submissions today. Four checks remain reserved.
+- Refreshed counters: 16/20 checks and 1/10 scored submissions today. Four checks remain reserved.
 - Check, submit, and Phase 2 switches are false; there are no pending GPU jobs.
-- The approved scored run required the exact checked hash, 9/9 correctness, and a 95% CI lower bound above live rank 10. v027 does not meet that gate.
-- That daily authorization is exhausted; a quota reset does not authorize further runs.
+- After the check round, the user explicitly authorized one v027 scored promotion and merge into `master`, superseding the earlier top-ten-only promotion condition for this run.
+- Both the 16-check allowance and that single scored authorization are used. Further GPU runs need fresh approval; a quota reset does not authorize them.
 
 ## Local workflow
 

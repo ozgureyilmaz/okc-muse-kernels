@@ -266,7 +266,7 @@ def best_speedup(problem: str, results: list[dict] | None = None) -> float | Non
         for row in results
         if row.get("problem") == problem
         and row.get("status") == "passed"
-        and row.get("kind", "scored") == "scored"
+        and row.get("kind", "scored") in ("submit", "scored")
         and row.get("speedup") is not None
     ]
     return max(speeds) if speeds else None

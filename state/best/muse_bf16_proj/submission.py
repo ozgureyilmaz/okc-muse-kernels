@@ -1,15 +1,27 @@
 # okc: problem=muse_bf16_proj
-# variant: v006_hopper_gemv_router_addmm
+# variant: v027_selective_measured_paths
 # problem: muse_bf16_proj
-# generator: sglang_hopper_gemv_torch_addmm
-# idea: Keep SGLang's H200 single-token GEMVs and fold the router hi/lo sum into the second FP32 addmm.
-# expected_gain: unmeasured; target decode-1 GEMV gains and remove one router elementwise launch for m>8.
-# risks: addmm backend/dtype support and strict router tolerance; aggregate gain may be too small.
+# generator: measured_router_splitk_tinygemm_pooler_deepgemm_selective
+# idea: Use v016 FP32 router GEMV for m<=8, v024 router hi/lo split-K MMA for 8<m<=64, and v011 concat above 64; select measured dense paths by layer and M.
+# expected_gain: unmeasured composition; combine measured router ranges and selected low-M/medium-M dense wins.
+# risks: split-K graph capture/reduction order and combined TinyGEMM/DeepGEMM dispatch remain unverified.
 
-from typing import TypedDict
+from typing import Any, TypedDict
 
 import torch
 import torch.nn.functional as F
+import triton
+import triton.language as tl
+try:
+    import deep_gemm
+except ImportError:
+    deep_gemm = None
+try:
+    from flashinfer.gemm import tinygemm_bf16
+    from flashinfer.gemm.routergemm import get_tinygemm2_module
+except ImportError:
+    tinygemm_bf16 = None
+    get_tinygemm2_module = None
 from sglang.kernels.ops.gemm.hopper_bf16_gemv import (
     _jit_hopper_bf16_gemv_module,
     hopper_bf16_gemv,
@@ -31,9 +43,174 @@ class Inputs(TypedDict):
 
 
 UNPOOLER_DECODE_N = 1024
+ROUTER_GEMV_BLOCK_K = 1024
+ROUTER_GEMV_BLOCK_M = 4
+TINYGEMM_MAX_M = 8
+TINYGEMM_SUPPORTED_CC = {(9, 0)}
+ROUTER_MMA_BLOCK_M_SMALL = 16
+ROUTER_MMA_BLOCK_M_LARGE = 32
+ROUTER_MMA_BLOCK_N = 32
+ROUTER_MMA_BLOCK_K = 128
+ROUTER_REDUCE_BLOCK = 128
+ROUTER_TARGET_CTAS = 256
+ROUTER_MAX_SPLIT_K = 32
 
 
-def prepare(weights: Weights) -> dict[str, torch.Tensor]:
+@triton.jit
+def _router_fp32_small_gemv(
+    X,
+    W,
+    Y,
+    M,
+    N: tl.constexpr,
+    K: tl.constexpr,
+    SX_M: tl.constexpr,
+    SX_K: tl.constexpr,
+    SW_N: tl.constexpr,
+    SW_K: tl.constexpr,
+    BLOCK_M: tl.constexpr,
+    BLOCK_K: tl.constexpr,
+):
+    pid_m = tl.program_id(0)
+    pid_n = tl.program_id(1)
+    rows = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+    ks = tl.arange(0, BLOCK_K)
+    acc = tl.zeros((BLOCK_M, BLOCK_K), dtype=tl.float32)
+
+    for k_offset in range(0, K, BLOCK_K):
+        k_idx = k_offset + ks
+        x_tile = tl.load(
+            X + rows[:, None] * SX_M + k_idx[None, :] * SX_K,
+            mask=(rows[:, None] < M) & (k_idx[None, :] < K),
+            other=0,
+        ).to(tl.float32)
+        w_tile = tl.load(
+            W + pid_n * SW_N + k_idx * SW_K,
+            mask=k_idx < K,
+            other=0.0,
+        )
+        acc = tl.fma(x_tile, w_tile[None, :], acc)
+
+    out = tl.sum(acc, axis=1)
+    tl.store(Y + rows * N + pid_n, out, mask=rows < M)
+
+
+@triton.jit
+def _router_hilo_splitk_mma(
+    X,
+    W_HI,
+    W_LO,
+    PARTIALS,
+    M,
+    N: tl.constexpr,
+    K: tl.constexpr,
+    K_PER_SPLIT: tl.constexpr,
+    SX_M: tl.constexpr,
+    SX_K: tl.constexpr,
+    SHI_N: tl.constexpr,
+    SHI_K: tl.constexpr,
+    SLO_N: tl.constexpr,
+    SLO_K: tl.constexpr,
+    BLOCK_M: tl.constexpr,
+    BLOCK_N: tl.constexpr,
+    BLOCK_K: tl.constexpr,
+):
+    pid_m = tl.program_id(0)
+    pid_n = tl.program_id(1)
+    pid_split = tl.program_id(2)
+    rows = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
+    cols = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+    ks = tl.arange(0, BLOCK_K)
+    k_begin = pid_split * K_PER_SPLIT
+    k_end = k_begin + K_PER_SPLIT
+
+    acc_hi = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+    acc_lo = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+
+    for k_offset in range(0, K_PER_SPLIT, BLOCK_K):
+        k_idx = k_begin + k_offset + ks
+        a = tl.load(
+            X + rows[:, None] * SX_M + k_idx[None, :] * SX_K,
+            mask=(rows[:, None] < M) & (k_idx[None, :] < K) & (k_idx[None, :] < k_end),
+            other=0,
+        )
+        b_hi_nk = tl.load(
+            W_HI + cols[:, None] * SHI_N + k_idx[None, :] * SHI_K,
+            mask=(cols[:, None] < N) & (k_idx[None, :] < K) & (k_idx[None, :] < k_end),
+            other=0,
+        )
+        b_lo_nk = tl.load(
+            W_LO + cols[:, None] * SLO_N + k_idx[None, :] * SLO_K,
+            mask=(cols[:, None] < N) & (k_idx[None, :] < K) & (k_idx[None, :] < k_end),
+            other=0,
+        )
+        acc_hi = tl.dot(a, tl.trans(b_hi_nk), acc_hi)
+        acc_lo = tl.dot(a, tl.trans(b_lo_nk), acc_lo)
+
+    partial = acc_hi + acc_lo
+    offsets = pid_split * M * N + rows[:, None] * N + cols[None, :]
+    tl.store(
+        PARTIALS + offsets,
+        partial,
+        mask=(rows[:, None] < M) & (cols[None, :] < N),
+    )
+
+
+@triton.jit
+def _reduce_router_splitk(
+    PARTIALS,
+    Y,
+    M: tl.constexpr,
+    N: tl.constexpr,
+    SPLIT_K: tl.constexpr,
+    BLOCK_OUT: tl.constexpr,
+):
+    split_offsets = tl.arange(0, SPLIT_K)
+    out_offsets = tl.program_id(0) * BLOCK_OUT + tl.arange(0, BLOCK_OUT)
+    values = tl.load(
+        PARTIALS + split_offsets[:, None] * (M * N) + out_offsets[None, :],
+        mask=out_offsets[None, :] < M * N,
+        other=0.0,
+    )
+    result = tl.sum(values, axis=0)
+    tl.store(Y + out_offsets, result, mask=out_offsets < M * N)
+
+
+def _router_split_k(
+    m: int,
+    n: int,
+    k: int,
+    block_m: int,
+    block_n: int,
+    block_k: int,
+) -> int:
+    output_ctas = triton.cdiv(m, block_m) * triton.cdiv(n, block_n)
+    split_k = 1
+    while output_ctas * split_k < ROUTER_TARGET_CTAS and split_k < ROUTER_MAX_SPLIT_K:
+        candidate = split_k * 2
+        if k % (candidate * block_k) != 0 or k // candidate < 2 * block_k:
+            break
+        split_k = candidate
+    return split_k
+
+
+def _router_hilo_concat_fallback(
+    x: torch.Tensor,
+    state: dict[str, Any],
+    n: int,
+    k: int,
+) -> torch.Tensor:
+    hi = state["router_hi"][:n, :k]
+    lo = state["router_lo"][:n, :k]
+    if n == state["router"].shape[0] and k == state["router"].shape[1]:
+        weights_t = state["router_hilo_t"]
+    else:
+        weights_t = torch.cat((hi, lo), dim=1).t().contiguous()
+    x_hilo = torch.cat((x, x), dim=1)
+    return torch.mm(x_hilo, weights_t, out_dtype=torch.float32)
+
+
+def prepare(weights: Weights) -> dict[str, Any]:
     state = {name: w.contiguous() for name, w in weights.items()}
 
     # Compile only; do not execute GEMV or derive any output from input data here.
@@ -47,15 +224,49 @@ def prepare(weights: Weights) -> dict[str, torch.Tensor]:
     if use_hopper_bf16_gemv(1, UNPOOLER_DECODE_N, w.shape[1]):
         _jit_hopper_bf16_gemv_module(UNPOOLER_DECODE_N, w.shape[1])
 
+    capability = tuple(torch.cuda.get_device_capability(state["qkv_gate"].device))
+    tinygemm_available = (
+        tinygemm_bf16 is not None
+        and get_tinygemm2_module is not None
+        and capability in TINYGEMM_SUPPORTED_CC
+    )
+    if tinygemm_available:
+        # Compile/load the cached FlashInfer module only; do not invoke GEMM here.
+        get_tinygemm2_module()
+    state["tinygemm_available"] = tinygemm_available
+    state["tinygemm_backend"] = (
+        "flashinfer_tinygemm_bf16" if tinygemm_available else "unavailable"
+    )
+
+    deep_gemm_available = (
+        deep_gemm is not None
+        and callable(getattr(deep_gemm, "bf16_gemm_nt", None))
+        and callable(getattr(deep_gemm, "use_deterministic_algorithms", None))
+        and capability[0] == 9
+    )
+    if deep_gemm_available:
+        # Select native SM90 dispatch without running a GEMM during preparation.
+        deep_gemm.use_deterministic_algorithms(True)
+    state["deep_gemm_native_sm90"] = deep_gemm_available
+    state["deep_gemm_backend"] = (
+        "deep_gemm_native_sm90" if deep_gemm_available else "unavailable"
+    )
+    print(
+        "Dense backends: "
+        f"TinyGEMM={state['tinygemm_backend']}, "
+        f"pooler DeepGEMM={state['deep_gemm_backend']}"
+    )
+
     router = state["router"]
     hi = router.to(torch.bfloat16)
     lo = (router - hi.float()).to(torch.bfloat16)
-    state["router_hi_t"] = hi.t().contiguous()
-    state["router_lo_t"] = lo.t().contiguous()
+    state["router_hi"] = hi.contiguous()
+    state["router_lo"] = lo.contiguous()
+    state["router_hilo_t"] = torch.cat((hi, lo), dim=1).t().contiguous()
     return state
 
 
-def kernel_fn(data: Inputs, state: dict[str, torch.Tensor]) -> torch.Tensor:
+def kernel_fn(data: Inputs, state: dict[str, Any]) -> torch.Tensor:
     x = data["x"]
     config = data["config"]
     m, n, k = config["m"], config["n"], config["k"]
@@ -63,18 +274,125 @@ def kernel_fn(data: Inputs, state: dict[str, torch.Tensor]) -> torch.Tensor:
 
     if layer == "router":
         if m <= 8:
-            return F.linear(x.float(), state["router"])
-        acc = torch.mm(x, state["router_hi_t"], out_dtype=torch.float32)
-        return torch.addmm(
-            acc,
-            x,
-            state["router_lo_t"],
-            beta=1,
-            alpha=1,
-            out_dtype=torch.float32,
-        )
+            w = state["router"]
+            block_m = 1 if m <= 2 else ROUTER_GEMV_BLOCK_M
+            y = torch.empty((m, n), device=x.device, dtype=torch.float32)
+            _router_fp32_small_gemv[(triton.cdiv(m, block_m), n)](
+                x,
+                w,
+                y,
+                m,
+                n,
+                k,
+                x.stride(0),
+                x.stride(1),
+                w.stride(0),
+                w.stride(1),
+                block_m,
+                ROUTER_GEMV_BLOCK_K,
+                num_warps=4,
+                num_stages=2,
+            )
+            return y
+
+        if 8 < m <= 64:
+            w_hi = state["router_hi"]
+            w_lo = state["router_lo"]
+            block_m = (
+                ROUTER_MMA_BLOCK_M_SMALL
+                if m <= 16
+                else ROUTER_MMA_BLOCK_M_LARGE
+            )
+            block_n = ROUTER_MMA_BLOCK_N
+            block_k = ROUTER_MMA_BLOCK_K
+            if (
+                n > w_hi.shape[0]
+                or k > w_hi.shape[1]
+                or n % block_n != 0
+                or k < 2 * block_k
+                or k % (2 * block_k) != 0
+            ):
+                return _router_hilo_concat_fallback(x, state, n, k)
+
+            split_k = _router_split_k(m, n, k, block_m, block_n, block_k)
+            k_per_split = k // split_k
+            partials = torch.empty(
+                (split_k, m, n), device=x.device, dtype=torch.float32
+            )
+            y = torch.empty((m, n), device=x.device, dtype=torch.float32)
+            _router_hilo_splitk_mma[
+                (triton.cdiv(m, block_m), triton.cdiv(n, block_n), split_k)
+            ](
+                x,
+                w_hi,
+                w_lo,
+                partials,
+                m,
+                n,
+                k,
+                k_per_split,
+                x.stride(0),
+                x.stride(1),
+                w_hi.stride(0),
+                w_hi.stride(1),
+                w_lo.stride(0),
+                w_lo.stride(1),
+                block_m,
+                block_n,
+                block_k,
+                num_warps=4,
+                num_stages=2,
+            )
+            _reduce_router_splitk[(triton.cdiv(m * n, ROUTER_REDUCE_BLOCK),)](
+                partials,
+                y,
+                m,
+                n,
+                split_k,
+                ROUTER_REDUCE_BLOCK,
+                num_warps=4,
+            )
+            return y
+
+        # Above m=64, use v011's allowed BF16 hi+lo matrix product.
+        x_hilo = torch.cat((x, x), dim=1)
+        return torch.mm(x_hilo, state["router_hilo_t"], out_dtype=torch.float32)
 
     w = state[layer][:n]
+
+    tiny_layer_range = (
+        (layer == "pooler" and 2 <= m <= TINYGEMM_MAX_M)
+        or (layer == "unpooler" and 1 <= m <= TINYGEMM_MAX_M)
+    )
+    tinygemm_supported = (
+        state["tinygemm_available"]
+        and tiny_layer_range
+        and x.ndim == 2
+        and w.ndim == 2
+        and m == x.shape[0]
+        and n == w.shape[0]
+        and k == x.shape[1] == w.shape[1]
+        and x.dtype == torch.bfloat16
+        and w.dtype == torch.bfloat16
+        and x.is_contiguous()
+        and w.is_contiguous()
+        and k % 64 == 0
+        and n % 16 == 0
+    )
+    if tinygemm_supported:
+        y = torch.empty((m, n), device=x.device, dtype=torch.bfloat16)
+        tinygemm_bf16(x, w, y, bias=None, use_pdl=False)
+        return y
+
     if use_hopper_bf16_gemv(m, n, k):
         return hopper_bf16_gemv(x, w)
+
+    if (
+        layer == "pooler"
+        and 8 < m <= 192
+        and state["deep_gemm_native_sm90"]
+    ):
+        y = torch.empty((m, n), device=x.device, dtype=torch.bfloat16)
+        deep_gemm.bf16_gemm_nt(x, w, y, compiled_dims="nk")
+        return y
     return F.linear(x, w)

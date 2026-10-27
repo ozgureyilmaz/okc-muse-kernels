@@ -1,8 +1,8 @@
 {
   "problem": "muse_bf16_proj",
-  "generated_at": "2026-10-27T16:55:37.515064+00:00",
-  "stage": "daily_check_reserve_reached",
-  "next_action": "No further GPU runs authorized: 16/20 checks used with four reserved. v027 is best checked but its CI lower bound is below live rank10; do not submit it under the conditional approval. Preserve sources and continue only offline planning until new explicit authorization.",
+  "generated_at": "2026-10-27T17:26:01.665560+00:00",
+  "stage": "scored_candidate_visible",
+  "next_action": "v027 is scored and visible on the leaderboard. Preserve its checked bytes and recorded scored job; do not resubmit it. All 16 authorized checks and the single separately approved scored promotion are used. No further GPU runs authorized; preserve four-check reserve and all switches false. Continue only offline work until fresh approval.",
   "window": "open until 2026-11-04T21:00:00-08:00",
   "assignments": [],
   "lint": [
@@ -138,7 +138,7 @@
     }
   ],
   "consecutive_misses": 0,
-  "best_speedup": 1.0139129765812975,
+  "best_speedup": 1.1717726912393547,
   "phase2_enabled": false,
   "best_check_speedup": 1.1803526965067401,
   "best_check": {
@@ -155,13 +155,28 @@
     ]
   },
   "leaderboard_observation": {
-    "fetched_at": "2026-10-27T16:53:30.411355+00:00",
-    "rank": 1153,
-    "ranked": 1158,
-    "public_speedup": 1.0139,
+    "fetched_at": "2026-10-27T17:23:35.293809+00:00",
+    "rank": 820,
+    "ranked": 1160,
+    "public_speedup": 1.1718,
     "rank10_speedup": 1.5696,
     "rank10_time_us": 3077.632128958767
   },
   "checks_used_today": 16,
-  "checks_reserved": 4
+  "checks_reserved": 4,
+  "best_scored": {
+    "variant_id": "v027_selective_measured_paths",
+    "hash": "e696a2e8f05daf5f3244f89371dfc32579486c32c53717ecee96421a5614fe30",
+    "job": "20251c5f78804f1f",
+    "speedup": 1.1717726912393547,
+    "time_us": 4122.64258769385,
+    "tests_passed": 9,
+    "tests_total": 9,
+    "speedup_ci": [
+      1.1541961008707644,
+      1.189349281607945
+    ]
+  },
+  "scored_used_today": 1,
+  "workflow_tests_passed": 18
 }

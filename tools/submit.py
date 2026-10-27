@@ -271,7 +271,9 @@ def _has_attempt_hash(problem: str, digest: str, *, scored: bool = False) -> boo
 
 
 def _maybe_update_best(problem: str, variant: Path, row: dict) -> None:
-    current = common.best_speedup(problem)
+    # The completed row is already in the ledger. Compare against earlier runs.
+    prior = [entry for entry in common.load_results() if entry != row]
+    current = common.best_speedup(problem, prior)
     if current is not None and float(row["speedup"]) <= current:
         return
     dest_dir = common.BEST / problem
