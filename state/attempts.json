@@ -1,13 +1,13 @@
 {
-  "source": "okc problems --json",
+  "source": "okc problems --json (direct read reported on 2026-10-27)",
   "resets": "00:00 UTC",
   "problems": {
     "muse_bf16_proj": {
       "status": "active",
       "scored": {
         "per_day": 10,
-        "used_local": 1,
-        "remaining_server": 9,
+        "used_local": 0,
+        "remaining_server": 10,
         "history": [
           {
             "at": "2026-10-24T15:08:50.632950+00:00",
@@ -18,12 +18,12 @@
             "status": "passed"
           }
         ],
-        "used_server": 1
+        "used_server": 0
       },
       "checks": {
         "per_day": 20,
-        "used_local": 8,
-        "remaining_server": 12,
+        "used_local": 0,
+        "remaining_server": 20,
         "history": [
           {
             "at": "2026-10-23T18:14:37.592031+00:00",
@@ -106,7 +106,7 @@
             "status": "passed"
           }
         ],
-        "used_server": 8
+        "used_server": 0
       }
     },
     "muse_attention_decode": {
@@ -178,5 +178,5 @@
       }
     }
   },
-  "limits_fetched_at": "2026-10-24T16:40:07.446470+00:00"
+  "limits_fetched_at": "2026-10-27T14:40:20+00:00"
 }

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Copy a variant into the problem tree and run `okc check` or `okc submit`.
 
 Dry-run unless `--approved` is set and the matching switch in state/config.json

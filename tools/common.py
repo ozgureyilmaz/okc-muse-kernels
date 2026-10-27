@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Paths, budgets, and records shared by the okc loop."""
 
 from __future__ import annotations
